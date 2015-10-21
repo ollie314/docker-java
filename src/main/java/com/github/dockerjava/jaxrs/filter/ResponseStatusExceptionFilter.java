@@ -1,4 +1,4 @@
-package com.github.dockerjava.core.util;
+package com.github.dockerjava.jaxrs.filter;
 
 import java.io.EOFException;
 import java.io.IOException;
@@ -83,8 +83,7 @@ public class ResponseStatusExceptionFilter implements ClientResponseFilter {
                 if (charset == null) {
                     charset = Charset.defaultCharset();
                 }
-                String message = new String(buffer, charset);
-                return message;
+                return new String(buffer, charset);
             }
         }
         return null;

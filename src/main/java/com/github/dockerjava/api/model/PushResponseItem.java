@@ -1,5 +1,6 @@
 package com.github.dockerjava.api.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 /**
@@ -9,4 +10,5 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 public class PushResponseItem extends ResponseItem {
 
     private static final long serialVersionUID = 8256977108011295857L;
+
 }

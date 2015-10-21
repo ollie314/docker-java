@@ -1,5 +1,5 @@
 [![Build Status](https://travis-ci.org/docker-java/docker-java.svg?branch=master)](https://travis-ci.org/docker-java/docker-java)
-[![Circle CI](https://circleci.com/gh/docker-java/docker-java.svg?style=svg)](https://circleci.com/gh/docker-java/docker-java)
+<!--[![Circle CI](https://circleci.com/gh/docker-java/docker-java.svg?style=svg)](https://circleci.com/gh/docker-java/docker-java)-->
 # docker-java 
 
 Java API client for [Docker](http://docs.docker.io/ "Docker")
@@ -8,7 +8,7 @@ Supports a subset of the Docker Remote API [v1.19](https://github.com/docker/doc
 
 <b>The current implementation is based on Jersey 2.x and therefore classpath incompatible with older Jersey 1.x dependent libraries!</b>
 
-Developer forum for [docker-java](https://groups.google.com/forum/?hl=de#!forum/docker-java-dev "docker-java")
+Developer forum for [docker-java](https://groups.google.com/forum/?#!forum/docker-java-dev "docker-java")
 
 ## Build with Maven
 
@@ -16,7 +16,7 @@ Developer forum for [docker-java](https://groups.google.com/forum/?hl=de#!forum/
 
 * Java 1.7
 * Maven 3.0.5
-* Docker daemon running
+* Docker 1.7.x
 
 If you need SSL, then you'll need to put your `*.pem` file into `~/.docker/`, if you're using boot2docker, do this: 
  
@@ -64,7 +64,7 @@ Run build without integration tests:
     <dependency>
           <groupId>com.github.docker-java</groupId>
           <artifactId>docker-java</artifactId>
-          <version>1.4.0</version>
+          <version>2.1.1</version>
     </dependency>
 
 ### Latest SNAPSHOT version
@@ -74,7 +74,7 @@ You can find the latest SNAPSHOT version including javadoc and source files on [
     <dependency>
           <groupId>com.github.docker-java</groupId>
           <artifactId>docker-java</artifactId>
-          <version>1.4.1-SNAPSHOT</version>
+          <version>2.1.2-SNAPSHOT</version>
     </dependency>
 
 ## Documentation

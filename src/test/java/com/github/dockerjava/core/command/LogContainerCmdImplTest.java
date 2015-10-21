@@ -17,6 +17,7 @@ import org.testng.annotations.Test;
 
 import com.github.dockerjava.api.NotFoundException;
 import com.github.dockerjava.api.command.CreateContainerResponse;
+import com.github.dockerjava.api.model.Frame;
 import com.github.dockerjava.client.AbstractDockerClientTest;
 
 @Test(groups = "integration")
@@ -59,8 +60,9 @@ public class LogContainerCmdImplTest extends AbstractDockerClientTest {
 
         assertThat(exitCode, equalTo(0));
 
-        CollectFramesCallback loggingCallback = new CollectFramesCallback();
+        LogContainerTestCallback loggingCallback = new LogContainerTestCallback();
 
+        // this essentially test the since=0 case
         dockerClient.logContainerCmd(container.getId()).withStdErr().withStdOut().exec(loggingCallback);
 
         loggingCallback.awaitCompletion();
@@ -71,7 +73,7 @@ public class LogContainerCmdImplTest extends AbstractDockerClientTest {
     @Test
     public void asyncLogNonExistingContainer() throws Exception {
 
-        CollectFramesCallback loggingCallback = new CollectFramesCallback() {
+        LogContainerTestCallback loggingCallback = new LogContainerTestCallback() {
             @Override
             public void onError(Throwable throwable) {
 
@@ -113,19 +115,19 @@ public class LogContainerCmdImplTest extends AbstractDockerClientTest {
 
         assertThat(exitCode, equalTo(0));
 
-        CollectFramesCallback loggingCallback = new CollectFramesCallback();
+        LogContainerTestCallback loggingCallback = new LogContainerTestCallback();
 
         dockerClient.logContainerCmd(container.getId()).withStdErr().withStdOut().exec(loggingCallback);
 
         loggingCallback.close();
 
-        loggingCallback = new CollectFramesCallback();
+        loggingCallback = new LogContainerTestCallback();
 
         dockerClient.logContainerCmd(container.getId()).withStdErr().withStdOut().exec(loggingCallback);
 
         loggingCallback.close();
 
-        loggingCallback = new CollectFramesCallback();
+        loggingCallback = new LogContainerTestCallback();
 
         dockerClient.logContainerCmd(container.getId()).withStdErr().withStdOut().exec(loggingCallback);
 
@@ -133,4 +135,33 @@ public class LogContainerCmdImplTest extends AbstractDockerClientTest {
 
         assertTrue(loggingCallback.toString().contains(snippet));
     }
+
+    @Test
+    public void asyncLogContainerWithSince() throws Exception {
+        String snippet = "hello world";
+
+        CreateContainerResponse container = dockerClient.createContainerCmd("busybox").withCmd("/bin/echo", snippet)
+                .exec();
+
+        LOG.info("Created container: {}", container.toString());
+        assertThat(container.getId(), not(isEmptyString()));
+
+        int timestamp = (int) (System.currentTimeMillis() / 1000);
+
+        dockerClient.startContainerCmd(container.getId()).exec();
+
+        int exitCode = dockerClient.waitContainerCmd(container.getId()).exec();
+
+        assertThat(exitCode, equalTo(0));
+
+        LogContainerTestCallback loggingCallback = new LogContainerTestCallback();
+
+        dockerClient.logContainerCmd(container.getId()).withStdErr().withStdOut().withSince(timestamp)
+                .exec(loggingCallback);
+
+        loggingCallback.awaitCompletion();
+
+        assertFalse(loggingCallback.toString().contains(snippet));
+    }
+
 }

@@ -1,8 +1,50 @@
 Change Log
 ===
-
-Latest SNAPSHOT
+Latest SNAPSHOT version
 ---
+* [#350] (https://github.com/docker-java/docker-java/pull/350) Remove ServiceLoader logic
+* [#344] (https://github.com/docker-java/docker-java/pull/344) Implement equals/hashCode for Filters
+* [#335] (https://github.com/docker-java/docker-java/pull/335) Improve backward-compatibility support for older API versions
+* [#333] (https://github.com/docker-java/docker-java/pull/333) Adding support for withPidMode 
+
+v2.1.1
+---
+* [#326] (https://github.com/docker-java/docker-java/pull/326) Add all missing fields to ResponseItem and related classes 
+* [#320] (https://github.com/docker-java/docker-java/pull/320) Support "since" field for logs command
+
+v2.1.0
+---
+* [#306] (https://github.com/docker-java/docker-java/pull/306) fix(core): fix NPE if latestItem is null in result callback
+* [#305] (https://github.com/docker-java/docker-java/pull/305) chore(core): do not expect default DockerCmdExecFactory service
+* [#304] (https://github.com/docker-java/docker-java/pull/304) Throw original exception when command.close() throws Exception too
+* [#299] (https://github.com/docker-java/docker-java/pull/299) BuildImage sync to 1.20 API
+* [#291] (https://github.com/docker-java/docker-java/pull/291) Moved "Memory", "MemorySwap" and "CpuShares" mappings from ContainerConfig to HostConfig
+
+v2.0.1
+---
+Release notes
+* This is a bugfix release. With this release docker >= v1.7.0 is recommended.
+
+All changes
+
+* [#301] (https://github.com/docker-java/docker-java/pull/301) Respect exception rules in .dockerignore file while build images
+* [#298] (https://github.com/docker-java/docker-java/pull/298) Fix repository name validation errors
+* [#296] (https://github.com/docker-java/docker-java/pull/296) Fix Build FROM private registry broken with docker 1.7.x 
+* [#295] (https://github.com/docker-java/docker-java/pull/295) Support certificate chains in cert.pem
+* [#287] (https://github.com/docker-java/docker-java/pull/287) Using the oomKillDisable flag throws a null pointer exception
+
+v2.0.0
+---
+Release notes
+
+* Some commands APIs has been changed to be callback-driven now to simplify the processing of the result streams for the client application. This affects namely the events, stats, log, attach, build, push and pull commands. Look at the Wiki how to [process events](https://github.com/docker-java/docker-java/wiki#handle-events) or how to [build an image](https://github.com/docker-java/docker-java/wiki#build-image-from-dockerfile) from dockerfile for example.
+* The `DockerClientConfig` API has changed to free it from implementation specific configuration options like `readTimeout`, `maxTotalConnections`, `maxPerRouteConnections` and `enableLoggingFilter`. Most options can be configured via `DockerCmdExecFactoryImpl` [programmatically](https://github.com/docker-java/docker-java/wiki#intialize-docker-client-advanced) now. Logging is configurable via [logback](https://github.com/docker-java/docker-java/blob/master/src/test/resources/logback.xml) configuration file in the classpath.
+
+All changes
+
+* [#284](https://github.com/docker-java/docker-java/pull/284) Added GZIP compression for build context creation
+* [#282](https://github.com/docker-java/docker-java/pull/282) Remove JAXRS/ApacheConnector implementation specific properties from DockerClientConfig
+* [#280](https://github.com/docker-java/docker-java/pull/280) Handle multiple source files in ADD command 
 * [#278](https://github.com/docker-java/docker-java/pull/278) Stop leaking tar files in temporary folder
 * [#275](https://github.com/docker-java/docker-java/pull/275) Implemented LogConfig (create and inspect containers) 
 * [#272](https://github.com/docker-java/docker-java/pull/272) remove withHostConfig() from create container command
@@ -13,7 +55,7 @@ Latest SNAPSHOT
 * [#262](https://github.com/docker-java/docker-java/pull/262) Accept filters in list containers 
 * [#260](https://github.com/docker-java/docker-java/pull/260) Add labels to create and inspect container
 
-v.1.4.0
+v1.4.0
 ---
 * [#248](https://github.com/docker-java/docker-java/pull/248) Removed deprecated start options
 * [#247](https://github.com/docker-java/docker-java/pull/247) Add Domainname attribute on create command
