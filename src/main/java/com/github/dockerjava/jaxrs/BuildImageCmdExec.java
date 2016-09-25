@@ -1,5 +1,18 @@
 package com.github.dockerjava.jaxrs;
 
+import static javax.ws.rs.client.Entity.entity;
+
+import javax.ws.rs.client.Invocation;
+import javax.ws.rs.client.WebTarget;
+import javax.ws.rs.core.MediaType;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import org.glassfish.jersey.client.ClientProperties;
+import org.glassfish.jersey.client.RequestEntityProcessing;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.github.dockerjava.api.async.ResultCallback;
 import com.github.dockerjava.api.command.BuildImageCmd;
 import com.github.dockerjava.api.model.AuthConfigurations;
@@ -8,20 +21,15 @@ import com.github.dockerjava.core.DockerClientConfig;
 import com.github.dockerjava.core.async.JsonStreamProcessor;
 import com.github.dockerjava.jaxrs.async.AbstractCallbackNotifier;
 import com.github.dockerjava.jaxrs.async.POSTCallbackNotifier;
-import org.glassfish.jersey.client.ClientProperties;
-import org.glassfish.jersey.client.RequestEntityProcessing;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import javax.ws.rs.client.Invocation;
-import javax.ws.rs.client.WebTarget;
-import javax.ws.rs.core.MediaType;
-
-import static javax.ws.rs.client.Entity.entity;
+import java.io.IOException;
+import java.net.URLEncoder;
 
 public class BuildImageCmdExec extends AbstrAsyncDockerCmdExec<BuildImageCmd, BuildResponseItem> implements
         BuildImageCmd.Exec {
     private static final Logger LOGGER = LoggerFactory.getLogger(BuildImageCmdExec.class);
+
+    private static final ObjectMapper MAPPER = new ObjectMapper();
 
     public BuildImageCmdExec(WebTarget baseResource, DockerClientConfig dockerClientConfig) {
         super(baseResource, dockerClientConfig);
@@ -29,7 +37,7 @@ public class BuildImageCmdExec extends AbstrAsyncDockerCmdExec<BuildImageCmd, Bu
 
     private Invocation.Builder resourceWithOptionalAuthConfig(BuildImageCmd command, Invocation.Builder request) {
         final AuthConfigurations authConfigs = firstNonNull(command.getBuildAuthConfigs(), getBuildAuthConfigs());
-        if (authConfigs != null) {
+        if (authConfigs != null && !authConfigs.getConfigs().isEmpty()) {
             request = request.header("X-Registry-Config", registryConfigs(authConfigs));
         }
         return request;
@@ -62,21 +70,18 @@ public class BuildImageCmdExec extends AbstrAsyncDockerCmdExec<BuildImageCmd, Bu
         if (command.getRemote() != null) {
             webTarget = webTarget.queryParam("remote", command.getRemote().toString());
         }
-        if (command.isQuiet()) {
-            webTarget = webTarget.queryParam("q", "true");
-        }
-        if (command.hasNoCacheEnabled()) {
-            webTarget = webTarget.queryParam("nocache", "true");
-        }
-        if (command.hasPullEnabled()) {
-            webTarget = webTarget.queryParam("pull", "true");
-        }
-        if (!command.hasRemoveEnabled()) {
+
+        webTarget = booleanQueryParam(webTarget, "q", command.isQuiet());
+        webTarget = booleanQueryParam(webTarget, "nocache", command.hasNoCacheEnabled());
+        webTarget = booleanQueryParam(webTarget, "pull", command.hasPullEnabled());
+        webTarget = booleanQueryParam(webTarget, "rm", command.hasRemoveEnabled());
+        webTarget = booleanQueryParam(webTarget, "forcerm", command.isForcerm());
+
+        // this has to be handled differently as it should switch to 'false'
+        if (command.hasRemoveEnabled() == null || !command.hasRemoveEnabled()) {
             webTarget = webTarget.queryParam("rm", "false");
         }
-        if (command.isForcerm()) {
-            webTarget = webTarget.queryParam("forcerm", "true");
-        }
+
         if (command.getMemory() != null) {
             webTarget = webTarget.queryParam("memory", command.getMemory());
         }
@@ -90,13 +95,32 @@ public class BuildImageCmdExec extends AbstrAsyncDockerCmdExec<BuildImageCmd, Bu
             webTarget = webTarget.queryParam("cpusetcpus", command.getCpusetcpus());
         }
 
+        if (command.hasRemoveEnabled() == null || !command.hasRemoveEnabled()) {
+            webTarget = webTarget.queryParam("rm", "false");
+        }
+
+        if (command.getBuildArgs() != null && !command.getBuildArgs().isEmpty()) {
+            try {
+                webTarget = webTarget.queryParam("buildargs",
+                        URLEncoder.encode(MAPPER.writeValueAsString(command.getBuildArgs()), "UTF-8"));
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        if (command.getShmsize() != null) {
+            webTarget = webTarget.queryParam("shmsize", command.getShmsize());
+        }
+
         webTarget.property(ClientProperties.REQUEST_ENTITY_PROCESSING, RequestEntityProcessing.CHUNKED);
         webTarget.property(ClientProperties.CHUNKED_ENCODING_SIZE, 1024 * 1024);
 
         LOGGER.trace("POST: {}", webTarget);
 
-        return new POSTCallbackNotifier<>(new JsonStreamProcessor<>(BuildResponseItem.class), resultCallback,
-                resourceWithOptionalAuthConfig(command, webTarget.request()).accept(MediaType.TEXT_PLAIN), entity(
-                        command.getTarInputStream(), "application/tar"));
+        return new POSTCallbackNotifier<>(new JsonStreamProcessor<>(BuildResponseItem.class),
+                resultCallback,
+                resourceWithOptionalAuthConfig(command, webTarget.request()).accept(MediaType.TEXT_PLAIN),
+                entity(command.getTarInputStream(), "application/tar")
+        );
     }
 }

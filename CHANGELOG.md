@@ -1,6 +1,135 @@
 Change Log
 ===
-Latest SNAPSHOT version
+## Next
+
+## 3.0.6
+ * Fixed issue with jersey and unix domain sockets.
+ * [#703](https://github.com/docker-java/docker-java/pull/703) Allow to configure connection pool timeout.
+ * Make all models Serializable.
+ * [NETTY] Fix loadImage responce on 1.24 API.
+ * LogPath field for inspect container.
+ * [#700] (https://github.com/docker-java/docker-java/pull/700) Bugfix:donot throw RuntimeException when a error occured in awaitCompletion(long,TimeUnit)
+
+## 3.0.5
+ * Events updated to 1.24 API model.
+
+## 3.0.4
+ * Make cert util methods public.
+
+## 3.0.3
+ * [JERSEY] Don't send body for start container request.
+
+## 3.0.2
+ * Enhanced Dockerignore filtering.
+ * Added shmsize for hostconfig.
+ * Exposed HostConfig instead of spaghetty calls.
+
+## 3.0.1
+
+All changes
+* Updated all dependencies
+* [#643] (https://github.com/docker-java/docker-java/pull/643) Fixes for .dockerignore filtering 
+* [#627] (https://github.com/docker-java/docker-java/pull/627) Implementation of POST /images/load endpoint 
+* [#630] (https://github.com/docker-java/docker-java/pull/630) Fix: Second execution of a docker command in Netty implementation always fails 
+* [#596] (https://github.com/docker-java/docker-java/pull/596) Refactor configuration of SSL to allow override with custom config 
+* [#529] (https://github.com/docker-java/docker-java/pull/529) Refactor CertUtils. Support ECDSA and PrivateKey 
+* [#593] (https://github.com/docker-java/docker-java/pull/593) Added Device.parse() method with simple verification.
+
+v3.0.0
+---
+Notes
+
+* The 3.0.0 release contains multiple API breaking changes compared to 2.x therefore the major version switch. It supports a subset of v.1.22 of the docker remote API. It also includes an experimental netty based implementation of `DockerCmdExecFactory` that probably will replace the current jersey/httpclient based one in a later release. Take a look at the [Wiki](https://github.com/docker-java/docker-java/wiki#intialize-docker-client-advanced) how to use it.
+* The configuration has been changed to better match the docker CLI configuration options. The properties file was renamed from `docker.io.properties` to `docker-java.properties`. See README.md for details.
+
+All changes
+* [#590] (https://github.com/docker-java/docker-java/pull/590) Fix default docker.properties to match with docker CLI defaults 
+* [#585] (https://github.com/docker-java/docker-java/pull/585) Add RootDir property to GraphData
+* [#580] (https://github.com/docker-java/docker-java/pull/580) Fixes execute permissions for files when copied to container 
+* [#579] (https://github.com/docker-java/docker-java/pull/579) Adds missing name filter evaluation to netty version of ListImagesCmdExec 
+* [#578] (https://github.com/docker-java/docker-java/pull/578) Fix error during image build when Dockerfile in subdirectory of build context
+* [#575] (https://github.com/docker-java/docker-java/pull/575) Support binding of port ranges
+* [#574] (https://github.com/docker-java/docker-java/pull/574) Fix for copyArchiveToContainerCmd bug
+* [#572] (https://github.com/docker-java/docker-java/pull/572) Inspect container command now shows sizes if requested 
+* [#563] (https://github.com/docker-java/docker-java/pull/563) Fix memory leak in netty implementation of DockerCmdExecFactory
+* [#550] (https://github.com/docker-java/docker-java/pull/550) Add ability to configure IPAM config for CreateNetworkCmd
+* [#484] (https://github.com/docker-java/docker-java/pull/484) Implement missing network api options for v1.22
+
+Included in 3.0.0-RC5
+
+* [#542] (https://github.com/docker-java/docker-java/pull/542) Fix large volumes of output from "docker exec" trigger out of memory error
+* [#541] (https://github.com/docker-java/docker-java/pull/541) ImageInspectResponse.GraphDriver.Data is more complex structure 
+* [#534] (https://github.com/docker-java/docker-java/pull/534) Fix create volume command doesn't assign passed in volume driverOpts to field
+* [#533] (https://github.com/docker-java/docker-java/pull/533) Added shmsize build option 
+
+Included in 3.0.0-RC4
+* [#528] (https://github.com/docker-java/docker-java/pull/528) Fix DOCKER_TLS_VERIFY cannot be 'false' or empty
+* [#527] (https://github.com/docker-java/docker-java/pull/527) Fix `mirrors` field is list and not a single string #527 
+* [#510] (https://github.com/docker-java/docker-java/pull/510) Add CgroupParent option for create cmd
+* [#509] (https://github.com/docker-java/docker-java/pull/509) Implement container rename api 
+* [#501] (https://github.com/docker-java/docker-java/pull/501) Fix execution of copy file/archive command skips 0xFF bytes 
+* [#500] (https://github.com/docker-java/docker-java/pull/500) Add aux to ResponseItem
+* [#498] (https://github.com/docker-java/docker-java/issues/498) Update image inspect response
+
+
+Included in 3.0.0-RC3
+* [#488] (https://github.com/docker-java/docker-java/pull/488) Support remote API 1.22 subset
+
+Included in 3.0.0-RC2
+* [#486] (https://github.com/docker-java/docker-java/pull/486) Fix NegativeArraySizeException in awaitCompletion()
+* [#472] (https://github.com/docker-java/docker-java/pull/472) Exec start command: detect end of STDIN stream 
+* [#466] (https://github.com/docker-java/docker-java/pull/466) Fix exec start stdin encoding 
+
+Included in 3.0.0-RC1
+* [#463] (https://github.com/docker-java/docker-java/pull/463) More logging drivers
+* [#447] (https://github.com/docker-java/docker-java/pull/447) Refactoring of DockerClientConfig 
+* [#430] (https://github.com/docker-java/docker-java/pull/430) Fix ExecStartCmd failure 
+* [#426] (https://github.com/docker-java/docker-java/pull/426) Refactored filters API 
+* [#425] (https://github.com/docker-java/docker-java/pull/425) Implement Network API
+* [#410] (https://github.com/docker-java/docker-java/pull/410) Support for build-args of docker build 
+* [#408] (https://github.com/docker-java/docker-java/pull/408) Support for volume API
+* [#406] (https://github.com/docker-java/docker-java/pull/406) Added RestartCount to InspectContainerResponse
+* [#396] (https://github.com/docker-java/docker-java/pull/396) Disable evaluation of http.proxy... variables when using unix socket connection 
+* [#393] (https://github.com/docker-java/docker-java/pull/393) Support ONBUILD instruction in Dockerfiles 
+* [#392] (https://github.com/docker-java/docker-java/pull/392) Introduce InspectContainerResponse.Mounts
+* [#387] (https://github.com/docker-java/docker-java/pull/387) Make ProgressDetails attributes public
+* [#386] (https://github.com/docker-java/docker-java/pull/386) Basic http proxy configuration support
+* [#362] (https://github.com/docker-java/docker-java/pull/362) Deprecate "network" and enable "networks" stats (remote Docker API 1.21) 
+* [#359] (https://github.com/docker-java/docker-java/pull/359) Fix performance issue of build command by adding bulk-read variant of InputStream.read()
+* [#357] (https://github.com/docker-java/docker-java/pull/357) Wait container command needs possibility to abort operation
+* [#347] (https://github.com/docker-java/docker-java/pull/347) Implementation of copy archive to/from container commands 
+* [#313] (https://github.com/docker-java/docker-java/pull/313) Refactor primitive type fields to be of object type in JSON objects
+
+v2.2.3
+---
+* [#487] (https://github.com/docker-java/docker-java/pull/487) Fix NegativeArraySizeException in awaitCompletion() 
+
+v2.2.2
+---
+* [#478] (https://github.com/docker-java/docker-java/pull/478) Remove debug println
+
+v2.2.1
+---
+* [#474] (https://github.com/docker-java/docker-java/pull/474) Fix periodic pull failure (2.x)
+
+v2.2.0
+---
+* [#457] (https://github.com/docker-java/docker-java/pull/457) Input configuration should not be altered as it breaks unix socket support 
+* [#430] (https://github.com/docker-java/docker-java/pull/430) Fix ExecStartCmd failure (backported from 3.0.0)
+
+v2.1.4
+---
+
+* [#396] (https://github.com/docker-java/docker-java/pull/396) Disable evaluation of http.proxy... variables when using unix socket connection  
+* [#359] (https://github.com/docker-java/docker-java/pull/359) Fix performance issue of build command by adding bulk-read variant of InputStream.read()
+
+v2.1.3
+---
+* [#387] (https://github.com/docker-java/docker-java/pull/387) Make ProgressDetails attributes public
+* [#386] (https://github.com/docker-java/docker-java/pull/386) Basic http proxy configuration support
+* [#362] (https://github.com/docker-java/docker-java/pull/362) Deprecate "network" and enable "networks" stats (remote Docker API 1.21)
+
+v2.1.2
 ---
 * [#350] (https://github.com/docker-java/docker-java/pull/350) Remove ServiceLoader logic
 * [#344] (https://github.com/docker-java/docker-java/pull/344) Implement equals/hashCode for Filters

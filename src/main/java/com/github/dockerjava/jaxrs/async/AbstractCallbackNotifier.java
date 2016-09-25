@@ -10,6 +10,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.ThreadFactory;
 
 import javax.ws.rs.ProcessingException;
 import javax.ws.rs.client.Invocation.Builder;
@@ -18,12 +19,16 @@ import javax.ws.rs.core.Response;
 import com.github.dockerjava.api.async.ResultCallback;
 import com.github.dockerjava.core.async.ResponseStreamProcessor;
 import com.github.dockerjava.jaxrs.util.WrappedResponseInputStream;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
 public abstract class AbstractCallbackNotifier<T> implements Callable<Void> {
 
     private final ResponseStreamProcessor<T> responseStreamProcessor;
 
     private final ResultCallback<T> resultCallback;
+
+    private static final ThreadFactory FACTORY =
+            new ThreadFactoryBuilder().setDaemon(true).setNameFormat("dockerjava-jaxrs-async-%d").build();
 
     protected final Builder requestBuilder;
 
@@ -55,11 +60,11 @@ public abstract class AbstractCallbackNotifier<T> implements Callable<Void> {
             return null;
         }
 
-        try {
-            InputStream inputStream = new WrappedResponseInputStream(response);
+        try (InputStream inputStream = new WrappedResponseInputStream(response)) {
 
-            if (resultCallback != null)
+            if (resultCallback != null) {
                 responseStreamProcessor.processResponseStream(inputStream, resultCallback);
+            }
 
             return null;
         } catch (Exception e) {
@@ -75,7 +80,7 @@ public abstract class AbstractCallbackNotifier<T> implements Callable<Void> {
 
     public static <T> Future<Void> startAsyncProcessing(AbstractCallbackNotifier<T> callbackNotifier) {
 
-        ExecutorService executorService = Executors.newSingleThreadExecutor();
+        ExecutorService executorService = Executors.newSingleThreadExecutor(FACTORY);
         Future<Void> response = executorService.submit(callbackNotifier);
         executorService.shutdown();
         return response;

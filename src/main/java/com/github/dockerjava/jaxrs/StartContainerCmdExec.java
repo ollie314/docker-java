@@ -1,14 +1,13 @@
 package com.github.dockerjava.jaxrs;
 
-import com.github.dockerjava.api.command.StartContainerCmd;
-import com.github.dockerjava.core.DockerClientConfig;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.MediaType;
 
-import static javax.ws.rs.client.Entity.entity;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.github.dockerjava.api.command.StartContainerCmd;
+import com.github.dockerjava.core.DockerClientConfig;
 
 public class StartContainerCmdExec extends AbstrSyncDockerCmdExec<StartContainerCmd, Void> implements
         StartContainerCmd.Exec {
@@ -21,11 +20,13 @@ public class StartContainerCmdExec extends AbstrSyncDockerCmdExec<StartContainer
 
     @Override
     protected Void execute(StartContainerCmd command) {
-        WebTarget webResource = getBaseResource().path("/containers/{id}/start").resolveTemplate("id",
-                command.getContainerId());
+        WebTarget webResource = getBaseResource().path("/containers/{id}/start")
+                .resolveTemplate("id", command.getContainerId());
 
         LOGGER.trace("POST: {}", webResource);
-        webResource.request().accept(MediaType.APPLICATION_JSON).post(entity(command, MediaType.APPLICATION_JSON))
+        webResource.request()
+                .accept(MediaType.APPLICATION_JSON)
+                .post(null)
                 .close();
 
         return null;

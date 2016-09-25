@@ -1,12 +1,16 @@
 package com.github.dockerjava.api.command;
 
-import com.github.dockerjava.api.model.AuthConfigurations;
-import com.github.dockerjava.api.model.BuildResponseItem;
-
-import javax.annotation.CheckForNull;
 import java.io.File;
 import java.io.InputStream;
 import java.net.URI;
+import java.util.Map;
+
+import javax.annotation.CheckForNull;
+import javax.annotation.Nonnull;
+
+import com.github.dockerjava.api.model.AuthConfigurations;
+import com.github.dockerjava.api.model.BuildResponseItem;
+import com.github.dockerjava.core.RemoteApiVersion;
 
 /**
  * Build an image from Dockerfile.
@@ -20,9 +24,11 @@ public interface BuildImageCmd extends AsyncDockerCmd<BuildImageCmd, BuildRespon
 
     // lib specific
 
-    public InputStream getTarInputStream();
+    @CheckForNull
+    InputStream getTarInputStream();
 
-    public AuthConfigurations getBuildAuthConfigs();
+    @CheckForNull
+    AuthConfigurations getBuildAuthConfigs();
 
     // getters
 
@@ -30,102 +36,116 @@ public interface BuildImageCmd extends AsyncDockerCmd<BuildImageCmd, BuildRespon
      * "t" in API
      */
     @CheckForNull
-    public String getTag();
+    String getTag();
 
     /**
      * "remote" in API
      */
     @CheckForNull
-    public URI getRemote();
+    URI getRemote();
 
     /**
      * "nocache" in API
      */
-    public boolean hasNoCacheEnabled();
+    @CheckForNull
+    Boolean hasNoCacheEnabled();
 
     /**
      * "rm" in API
      */
-    public boolean hasRemoveEnabled();
+    @CheckForNull
+    Boolean hasRemoveEnabled();
 
     /**
      * "forcerm" in API
      */
-    public boolean isForcerm();
-
     @CheckForNull
-    public Boolean getForcerm();
+    Boolean isForcerm();
 
     /**
      * "q" in API
      */
-    public boolean isQuiet();
+    @CheckForNull
+    Boolean isQuiet();
 
     /**
      * "pull" in API
      */
-    public boolean hasPullEnabled();
+    @CheckForNull
+    Boolean hasPullEnabled();
 
     @CheckForNull
-    public String getPathToDockerfile();
+    String getPathToDockerfile();
 
     @CheckForNull
-    public Long getMemory();
+    Long getMemory();
 
     @CheckForNull
-    public Long getMemswap();
+    Long getMemswap();
 
     @CheckForNull
-    public String getCpushares();
+    String getCpushares();
 
     @CheckForNull
-    public String getCpusetcpus();
+    String getCpusetcpus();
+
+    /**
+     * @since {@link RemoteApiVersion#VERSION_1_21}
+     */
+    @CheckForNull
+    Map<String, String> getBuildArgs();
+
+    /**
+     *@since {@link RemoteApiVersion#VERSION_1_22}
+     */
+    @CheckForNull
+    Long getShmsize();
 
     // setters
 
-    public BuildImageCmd withTag(String tag);
+    BuildImageCmd withTag(String tag);
 
-    public BuildImageCmd withRemote(URI remote);
+    BuildImageCmd withRemote(URI remote);
 
-    public BuildImageCmd withBaseDirectory(File baseDirectory);
+    BuildImageCmd withBaseDirectory(File baseDirectory);
 
-    public BuildImageCmd withDockerfile(File dockerfile);
+    BuildImageCmd withDockerfile(File dockerfile);
 
-    public BuildImageCmd withNoCache();
+    BuildImageCmd withNoCache(Boolean noCache);
 
-    public BuildImageCmd withNoCache(boolean noCache);
+    BuildImageCmd withRemove(Boolean rm);
 
-    public BuildImageCmd withRemove();
+    BuildImageCmd withForcerm(Boolean forcerm);
 
-    public BuildImageCmd withRemove(boolean rm);
+    BuildImageCmd withQuiet(Boolean quiet);
 
-    public BuildImageCmd withForcerm();
+    BuildImageCmd withPull(Boolean pull);
 
-    public BuildImageCmd withForcerm(Boolean forcerm);
+    BuildImageCmd withMemory(Long memory);
 
-    public BuildImageCmd withQuiet();
+    BuildImageCmd withMemswap(Long memswap);
 
-    public BuildImageCmd withQuiet(boolean quiet);
+    BuildImageCmd withCpushares(String cpushares);
 
-    public BuildImageCmd withPull();
+    BuildImageCmd withCpusetcpus(String cpusetcpus);
 
-    public BuildImageCmd withPull(boolean pull);
-
-    public BuildImageCmd withMemory(long memory);
-
-    public BuildImageCmd withMemswap(long memswap);
-
-    public BuildImageCmd withCpushares(String cpushares);
-
-    public BuildImageCmd withCpusetcpus(String cpusetcpus);
+    /**
+     * @since {@link RemoteApiVersion#VERSION_1_21}
+     */
+    BuildImageCmd withBuildArg(String key, String value);
 
     // setters lib specific
 
-    public BuildImageCmd withBuildAuthConfigs(AuthConfigurations authConfig);
+    BuildImageCmd withBuildAuthConfigs(AuthConfigurations authConfig);
 
-    public BuildImageCmd withTarInputStream(InputStream tarInputStream);
+    BuildImageCmd withTarInputStream(@Nonnull InputStream tarInputStream);
 
-    public static interface Exec extends DockerCmdAsyncExec<BuildImageCmd, BuildResponseItem> {
+    /**
+    *@since {@link RemoteApiVersion#VERSION_1_22}
+    */
+    BuildImageCmd withShmsize(Long shmsize);
+
+    interface Exec extends DockerCmdAsyncExec<BuildImageCmd, BuildResponseItem> {
     }
 
 }

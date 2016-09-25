@@ -1,9 +1,18 @@
 package com.github.dockerjava.api.model;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
+import org.apache.commons.lang.builder.ReflectionToStringBuilder;
+import org.apache.commons.lang.builder.ToStringStyle;
+
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-public class AuthConfig {
+import javax.annotation.CheckForNull;
+import java.io.Serializable;
+
+@JsonInclude(Include.NON_NULL)
+public class AuthConfig implements Serializable {
+    private static final long serialVersionUID = 1L;
 
     /**
      * For backwards compatibility. Make sure you update the properties if you change this.
@@ -22,58 +31,84 @@ public class AuthConfig {
     private String email;
 
     @JsonProperty("serveraddress")
-    private String serverAddress = DEFAULT_SERVER_ADDRESS;
+    private String registryAddress = DEFAULT_SERVER_ADDRESS;
 
+    @JsonProperty("auth")
     private String auth;
+
+    /**
+     * @since {@link com.github.dockerjava.core.RemoteApiVersion#VERSION_1_22}
+     */
+    @JsonProperty("registrytoken")
+    private String registrytoken;
 
     public String getUsername() {
         return username;
     }
 
-    public void setUsername(String username) {
+    public AuthConfig withUsername(String username) {
         this.username = username;
+        return this;
     }
 
     public String getPassword() {
         return password;
     }
 
-    public void setPassword(String password) {
+    public AuthConfig withPassword(String password) {
         this.password = password;
+        return this;
     }
 
     public String getEmail() {
         return email;
     }
 
-    public void setEmail(String email) {
+    public AuthConfig withEmail(String email) {
         this.email = email;
+        return this;
     }
 
-    public String getServerAddress() {
-        return serverAddress;
+    public String getRegistryAddress() {
+        return registryAddress;
     }
 
-    public void setServerAddress(String serverAddress) {
-        this.serverAddress = serverAddress;
+    public AuthConfig withRegistryAddress(String registryAddress) {
+        this.registryAddress = registryAddress;
+        return this;
     }
 
-    @JsonIgnore
     public String getAuth() {
         return auth;
     }
 
-    @JsonProperty("auth")
-    public void setAuth(String auth) {
+    public AuthConfig withAuth(String auth) {
         this.auth = auth;
+        return this;
+    }
+
+    /**
+     * @see #registrytoken
+     */
+    @CheckForNull
+    public String getRegistrytoken() {
+        return registrytoken;
+    }
+
+    /**
+     * @see #registrytoken
+     */
+    public AuthConfig withRegistrytoken(String registrytoken) {
+        this.registrytoken = registrytoken;
+        return this;
     }
 
     @Override
     public String toString() {
-        return "AuthConfig{" + "username='" + username + '\'' + ", password='" + password + '\'' + ", email='" + email
-                + '\'' + ", serverAddress='" + serverAddress + '\'' + '}';
+        return ReflectionToStringBuilder.toString(this, ToStringStyle.SHORT_PREFIX_STYLE);
     }
 
+    // CHECKSTYLE:OFF
     @Override
     public int hashCode() {
         final int prime = 31;
@@ -81,7 +116,7 @@ public class AuthConfig {
         result = prime * result + ((auth == null) ? 0 : auth.hashCode());
         result = prime * result + ((email == null) ? 0 : email.hashCode());
         result = prime * result + ((password == null) ? 0 : password.hashCode());
-        result = prime * result + ((serverAddress == null) ? 0 : serverAddress.hashCode());
+        result = prime * result + ((registryAddress == null) ? 0 : registryAddress.hashCode());
         result = prime * result + ((username == null) ? 0 : username.hashCode());
         return result;
     }
@@ -110,10 +145,10 @@ public class AuthConfig {
                 return false;
         } else if (!password.equals(other.password))
             return false;
-        if (serverAddress == null) {
-            if (other.serverAddress != null)
+        if (registryAddress == null) {
+            if (other.registryAddress != null)
                 return false;
-        } else if (!serverAddress.equals(other.serverAddress))
+        } else if (!registryAddress.equals(other.registryAddress))
             return false;
         if (username == null) {
             if (other.username != null)
@@ -122,4 +157,5 @@ public class AuthConfig {
             return false;
         return true;
     }
+    // CHECKSTYLE:ON
 }

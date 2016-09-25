@@ -3,13 +3,15 @@ package com.github.dockerjava.api.model;
 import org.apache.commons.lang.builder.EqualsBuilder;
 import org.apache.commons.lang.builder.HashCodeBuilder;
 
+import java.io.Serializable;
+
 /**
- * Represents a network link between two Docker containers. The container with the name {@link #getName()} is made
- * available in the target container with the aliased name {@link #getAlias()}. This involves creating an entry in
- * <code>/etc/hosts</code> and some environment variables in the target container as well as creating a network bridge
- * between both containers.
+ * Represents a network link between two Docker containers. The container with the name {@link #getName()} is made available in the target
+ * container with the aliased name {@link #getAlias()}. This involves creating an entry in <code>/etc/hosts</code> and some environment
+ * variables in the target container as well as creating a network bridge between both containers.
  */
-public class Link {
+public class Link implements Serializable {
+    private static final long serialVersionUID = 1L;
 
     private final String name;
 
@@ -17,7 +19,7 @@ public class Link {
 
     /**
      * Creates a {@link Link} for the container with the given name and an aliased name for use in the target container.
-     * 
+     *
      * @param name
      *            the name of the container that you want to link into the target container
      * @param alias
@@ -44,7 +46,7 @@ public class Link {
 
     /**
      * Parses a textual link specification (as used by the Docker CLI) to a {@link Link}.
-     * 
+     *
      * @param serialized
      *            the specification, e.g. <code>name:alias</code> or <code>/name1:/name2/alias</code>
      * @return a {@link Link} matching the specification
@@ -55,14 +57,14 @@ public class Link {
         try {
             final String[] parts = serialized.split(":");
             switch (parts.length) {
-            case 2: {
-                String[] nameSplit = parts[0].split("/");
-                String[] aliasSplit = parts[1].split("/");
-                return new Link(nameSplit[nameSplit.length - 1], aliasSplit[aliasSplit.length - 1]);
-            }
-            default: {
-                throw new IllegalArgumentException();
-            }
+                case 2: {
+                    String[] nameSplit = parts[0].split("/");
+                    String[] aliasSplit = parts[1].split("/");
+                    return new Link(nameSplit[nameSplit.length - 1], aliasSplit[aliasSplit.length - 1]);
+                }
+                default: {
+                    throw new IllegalArgumentException();
+                }
             }
         } catch (final Exception e) {
             throw new IllegalArgumentException("Error parsing Link '" + serialized + "'");
@@ -74,8 +76,9 @@ public class Link {
         if (obj instanceof Link) {
             final Link other = (Link) obj;
             return new EqualsBuilder().append(name, other.getName()).append(alias, other.getAlias()).isEquals();
-        } else
+        } else {
             return super.equals(obj);
+        }
     }
 
     @Override
@@ -84,9 +87,9 @@ public class Link {
     }
 
     /**
-     * Returns a string representation of this {@link Link} suitable for inclusion in a JSON message. The format is
-     * <code>name:alias</code>, like the argument in {@link #parse(String)}.
-     * 
+     * Returns a string representation of this {@link Link} suitable for inclusion in a JSON message. The format is <code>name:alias</code>,
+     * like the argument in {@link #parse(String)}.
+     *
      * @return a string representation of this {@link Link}
      */
     @Override

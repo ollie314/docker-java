@@ -3,7 +3,11 @@ package com.github.dockerjava.api.model;
 import org.apache.commons.lang.builder.ToStringBuilder;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
+
+import java.io.Serializable;
 
 /**
  *
@@ -11,10 +15,12 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  *
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class Image {
+@JsonInclude(Include.NON_NULL)
+public class Image implements Serializable {
+    private static final long serialVersionUID = 1L;
 
     @JsonProperty("Created")
-    private long created;
+    private Long created;
 
     @JsonProperty("Id")
     private String id;
@@ -26,10 +32,10 @@ public class Image {
     private String[] repoTags;
 
     @JsonProperty("Size")
-    private long size;
+    private Long size;
 
     @JsonProperty("VirtualSize")
-    private long virtualSize;
+    private Long virtualSize;
 
     public String getId() {
         return id;
@@ -43,15 +49,15 @@ public class Image {
         return parentId;
     }
 
-    public long getCreated() {
+    public Long getCreated() {
         return created;
     }
 
-    public long getSize() {
+    public Long getSize() {
         return size;
     }
 
-    public long getVirtualSize() {
+    public Long getVirtualSize() {
         return virtualSize;
     }
 

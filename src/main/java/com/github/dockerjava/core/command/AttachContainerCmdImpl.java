@@ -2,6 +2,8 @@ package com.github.dockerjava.core.command;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import java.io.InputStream;
+
 import com.github.dockerjava.api.command.AttachContainerCmd;
 import com.github.dockerjava.api.model.Frame;
 
@@ -17,6 +19,8 @@ import com.github.dockerjava.api.model.Frame;
  *            - true or false, includes stdout log. Defaults to false.
  * @param stderr
  *            - true or false, includes stderr log. Defaults to false.
+ * @param stdin
+ *            - null or {@link InputStream}, pass stream to stdin of the container.
  * @param timestamps
  *            - true or false, if true, print timestamps for every log line. Defaults to false.
  */
@@ -25,7 +29,9 @@ public class AttachContainerCmdImpl extends AbstrAsyncDockerCmd<AttachContainerC
 
     private String containerId;
 
-    private boolean logs, followStream, timestamps, stdout, stderr;
+    private Boolean logs, followStream, timestamps, stdout, stderr;
+
+    private InputStream stdin;
 
     public AttachContainerCmdImpl(AttachContainerCmd.Exec exec, String containerId) {
         super(exec);
@@ -38,28 +44,33 @@ public class AttachContainerCmdImpl extends AbstrAsyncDockerCmd<AttachContainerC
     }
 
     @Override
-    public boolean hasLogsEnabled() {
+    public Boolean hasLogsEnabled() {
         return logs;
     }
 
     @Override
-    public boolean hasFollowStreamEnabled() {
+    public Boolean hasFollowStreamEnabled() {
         return followStream;
     }
 
     @Override
-    public boolean hasTimestampsEnabled() {
+    public Boolean hasTimestampsEnabled() {
         return timestamps;
     }
 
     @Override
-    public boolean hasStdoutEnabled() {
+    public Boolean hasStdoutEnabled() {
         return stdout;
     }
 
     @Override
-    public boolean hasStderrEnabled() {
+    public Boolean hasStderrEnabled() {
         return stderr;
+    }
+
+    @Override
+    public InputStream getStdin() {
+        return stdin;
     }
 
     @Override
@@ -70,52 +81,39 @@ public class AttachContainerCmdImpl extends AbstrAsyncDockerCmd<AttachContainerC
     }
 
     @Override
-    public AttachContainerCmd withFollowStream() {
-        return withFollowStream(true);
-    }
-
-    @Override
-    public AttachContainerCmd withFollowStream(boolean followStream) {
+    public AttachContainerCmd withFollowStream(Boolean followStream) {
         this.followStream = followStream;
         return this;
     }
 
     @Override
-    public AttachContainerCmd withTimestamps(boolean timestamps) {
+    public AttachContainerCmd withTimestamps(Boolean timestamps) {
         this.timestamps = timestamps;
         return this;
     }
 
     @Override
-    public AttachContainerCmd withStdOut() {
-        return withStdOut(true);
-    }
-
-    @Override
-    public AttachContainerCmd withStdOut(boolean stdout) {
+    public AttachContainerCmd withStdOut(Boolean stdout) {
         this.stdout = stdout;
         return this;
     }
 
     @Override
-    public AttachContainerCmd withStdErr() {
-        return withStdErr(true);
-    }
-
-    @Override
-    public AttachContainerCmd withStdErr(boolean stderr) {
+    public AttachContainerCmd withStdErr(Boolean stderr) {
         this.stderr = stderr;
         return this;
     }
 
     @Override
-    public AttachContainerCmd withLogs(boolean logs) {
-        this.logs = logs;
+    public AttachContainerCmd withStdIn(InputStream stdin) {
+        checkNotNull(stdin, "stdin was not specified");
+        this.stdin = stdin;
         return this;
     }
 
     @Override
-    public AttachContainerCmd withLogs() {
-        return withLogs(true);
+    public AttachContainerCmd withLogs(Boolean logs) {
+        this.logs = logs;
+        return this;
     }
 }

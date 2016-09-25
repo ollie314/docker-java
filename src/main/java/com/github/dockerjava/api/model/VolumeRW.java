@@ -1,6 +1,7 @@
 package com.github.dockerjava.api.model;
 
 import java.io.IOException;
+import java.io.Serializable;
 import java.util.Map.Entry;
 
 import org.apache.commons.lang.builder.EqualsBuilder;
@@ -18,15 +19,19 @@ import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.node.NullNode;
+import com.github.dockerjava.core.RemoteApiVersion;
 
 /**
  * Represents a bind mounted volume in a Docker container.
- * 
+ *
  * @see Bind
+ * @deprecated since {@link RemoteApiVersion#VERSION_1_20}
  */
 @JsonDeserialize(using = VolumeRW.Deserializer.class)
 @JsonSerialize(using = VolumeRW.Serializer.class)
-public class VolumeRW {
+@Deprecated
+public class VolumeRW implements Serializable {
+    private static final long serialVersionUID = 1L;
 
     private Volume volume;
 
@@ -50,9 +55,9 @@ public class VolumeRW {
     }
 
     /**
-     * Returns a string representation of this {@link VolumeRW} suitable for inclusion in a JSON message. The returned
-     * String is simply the container path, {@link #getPath()}.
-     * 
+     * Returns a string representation of this {@link VolumeRW} suitable for inclusion in a JSON message. The returned String is simply the
+     * container path, {@link #getPath()}.
+     *
      * @return a string representation of this {@link VolumeRW}
      */
     @Override
@@ -66,8 +71,9 @@ public class VolumeRW {
             VolumeRW other = (VolumeRW) obj;
             return new EqualsBuilder().append(getVolume(), other.getVolume()).append(accessMode, other.getAccessMode())
                     .isEquals();
-        } else
+        } else {
             return super.equals(obj);
+        }
     }
 
     @Override

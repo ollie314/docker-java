@@ -7,19 +7,22 @@ import org.apache.commons.lang.builder.HashCodeBuilder;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.io.Serializable;
+
 /**
  * @author Vangie Du (duwan@live.com)
  */
-public class Ulimit {
+public class Ulimit implements Serializable {
+    private static final long serialVersionUID = 1L;
 
     @JsonProperty("Name")
     private String name;
 
     @JsonProperty("Soft")
-    private int soft;
+    private Integer soft;
 
     @JsonProperty("Hard")
-    private int hard;
+    private Integer hard;
 
     public Ulimit() {
 
@@ -37,14 +40,15 @@ public class Ulimit {
         return name;
     }
 
-    public int getSoft() {
+    public Integer getSoft() {
         return soft;
     }
 
-    public int getHard() {
+    public Integer getHard() {
         return hard;
     }
 
+    // CHECKSTYLE:OFF
     @Override
     public boolean equals(Object obj) {
         if (obj instanceof Ulimit) {
@@ -60,4 +64,5 @@ public class Ulimit {
     public int hashCode() {
         return new HashCodeBuilder().append(name).append(soft).append(hard).toHashCode();
     }
+    // CHECKSTYLE:ON
 }

@@ -1,5 +1,8 @@
 package com.github.dockerjava.api.command;
 
+import javax.annotation.CheckForNull;
+import javax.annotation.Nonnull;
+
 import com.github.dockerjava.api.model.AuthConfig;
 import com.github.dockerjava.api.model.PullResponseItem;
 
@@ -10,22 +13,25 @@ import com.github.dockerjava.api.model.PullResponseItem;
  */
 public interface PullImageCmd extends AsyncDockerCmd<PullImageCmd, PullResponseItem> {
 
-    public String getRepository();
+    @CheckForNull
+    String getRepository();
 
-    public String getTag();
+    @CheckForNull
+    String getTag();
 
-    public String getRegistry();
+    @CheckForNull
+    String getRegistry();
 
-    public AuthConfig getAuthConfig();
+    AuthConfig getAuthConfig();
 
-    public PullImageCmd withRepository(String repository);
+    PullImageCmd withRepository(@Nonnull String repository);
 
-    public PullImageCmd withTag(String tag);
+    PullImageCmd withTag(String tag);
 
-    public PullImageCmd withRegistry(String registry);
+    PullImageCmd withRegistry(String registry);
 
-    public PullImageCmd withAuthConfig(AuthConfig authConfig);
+    PullImageCmd withAuthConfig(AuthConfig authConfig);
 
-    public static interface Exec extends DockerCmdAsyncExec<PullImageCmd, PullResponseItem> {
+    interface Exec extends DockerCmdAsyncExec<PullImageCmd, PullResponseItem> {
     }
 }

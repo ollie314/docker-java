@@ -15,11 +15,11 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
-import com.github.dockerjava.api.DockerClientException;
+import com.github.dockerjava.api.exception.DockerClientException;
 import com.github.dockerjava.api.command.CreateContainerResponse;
 import com.github.dockerjava.client.AbstractDockerClientTest;
 
-@Test(groups = "integration")
+@Test(groups = {"integration-auth", "integration"})
 public class PushImageCmdImplTest extends AbstractDockerClientTest {
 
     public static final Logger LOG = LoggerFactory.getLogger(PushImageCmdImplTest.class);

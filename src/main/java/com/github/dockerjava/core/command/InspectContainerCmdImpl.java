@@ -2,9 +2,9 @@ package com.github.dockerjava.core.command;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import com.github.dockerjava.api.NotFoundException;
 import com.github.dockerjava.api.command.InspectContainerCmd;
 import com.github.dockerjava.api.command.InspectContainerResponse;
+import com.github.dockerjava.api.exception.NotFoundException;
 
 /**
  * Inspect the details of a container.
@@ -13,6 +13,7 @@ public class InspectContainerCmdImpl extends AbstrDockerCmd<InspectContainerCmd,
         InspectContainerCmd {
 
     private String containerId;
+    private boolean size;
 
     public InspectContainerCmdImpl(InspectContainerCmd.Exec exec, String containerId) {
         super(exec);
@@ -32,8 +33,14 @@ public class InspectContainerCmdImpl extends AbstrDockerCmd<InspectContainerCmd,
     }
 
     @Override
-    public String toString() {
-        return "inspect " + containerId;
+    public InspectContainerCmd withSize(Boolean showSize) {
+        this.size = showSize;
+        return this;
+    }
+
+    @Override
+    public Boolean getSize() {
+        return size;
     }
 
     /**

@@ -1,11 +1,14 @@
 package com.github.dockerjava.api.model;
 
+import java.io.Serializable;
 import java.util.Arrays;
 
 /**
  * Represents a logging frame.
  */
-public class Frame {
+public class Frame implements Serializable {
+    private static final long serialVersionUID = 1L;
+
     private final StreamType streamType;
 
     private final byte[] payload;
@@ -28,6 +31,7 @@ public class Frame {
         return String.format("%s: %s", streamType, new String(payload).trim());
     }
 
+    // CHECKSTYLE:OFF
     @Override
     public boolean equals(Object o) {
         if (this == o)
@@ -47,4 +51,5 @@ public class Frame {
         result = 31 * result + Arrays.hashCode(payload);
         return result;
     }
+    // CHECKSTYLE:ON
 }

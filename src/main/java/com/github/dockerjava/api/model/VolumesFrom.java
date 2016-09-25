@@ -1,6 +1,7 @@
 package com.github.dockerjava.api.model;
 
 import java.io.IOException;
+import java.io.Serializable;
 
 import org.apache.commons.lang.builder.EqualsBuilder;
 import org.apache.commons.lang.builder.HashCodeBuilder;
@@ -19,7 +20,8 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
 @JsonSerialize(using = VolumesFrom.Serializer.class)
 @JsonDeserialize(using = VolumesFrom.Deserializer.class)
-public class VolumesFrom {
+public class VolumesFrom implements Serializable {
+    private static final long serialVersionUID = 1L;
 
     private String container;
 
@@ -44,7 +46,7 @@ public class VolumesFrom {
 
     /**
      * Parses a volume from specification to a {@link VolumesFrom}.
-     * 
+     *
      * @param serialized
      *            the specification, e.g. <code>container:ro</code>
      * @return a {@link VolumesFrom} matching the specification
@@ -55,16 +57,16 @@ public class VolumesFrom {
         try {
             String[] parts = serialized.split(":");
             switch (parts.length) {
-            case 1: {
-                return new VolumesFrom(parts[0]);
-            }
-            case 2: {
-                return new VolumesFrom(parts[0], AccessMode.valueOf(parts[1]));
-            }
+                case 1: {
+                    return new VolumesFrom(parts[0]);
+                }
+                case 2: {
+                    return new VolumesFrom(parts[0], AccessMode.valueOf(parts[1]));
+                }
 
-            default: {
-                throw new IllegalArgumentException();
-            }
+                default: {
+                    throw new IllegalArgumentException();
+                }
             }
         } catch (Exception e) {
             throw new IllegalArgumentException("Error parsing Bind '" + serialized + "'");
@@ -77,8 +79,9 @@ public class VolumesFrom {
             VolumesFrom other = (VolumesFrom) obj;
             return new EqualsBuilder().append(container, other.getContainer())
                     .append(accessMode, other.getAccessMode()).isEquals();
-        } else
+        } else {
             return super.equals(obj);
+        }
     }
 
     @Override
@@ -87,9 +90,9 @@ public class VolumesFrom {
     }
 
     /**
-     * Returns a string representation of this {@link VolumesFrom} suitable for inclusion in a JSON message. The format
-     * is <code>&lt;container&gt;:&lt;access mode&gt;</code>, like the argument in {@link #parse(String)}.
-     * 
+     * Returns a string representation of this {@link VolumesFrom} suitable for inclusion in a JSON message. The format is
+     * <code>&lt;container&gt;:&lt;access mode&gt;</code>, like the argument in {@link #parse(String)}.
+     *
      * @return a string representation of this {@link VolumesFrom}
      */
     @Override

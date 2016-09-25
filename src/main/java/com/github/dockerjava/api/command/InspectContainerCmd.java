@@ -1,21 +1,28 @@
 package com.github.dockerjava.api.command;
 
-import com.github.dockerjava.api.NotFoundException;
+import javax.annotation.CheckForNull;
+import javax.annotation.Nonnull;
+
+import com.github.dockerjava.api.exception.NotFoundException;
 
 public interface InspectContainerCmd extends SyncDockerCmd<InspectContainerResponse> {
 
-    public String getContainerId();
+    @CheckForNull
+    String getContainerId();
 
-    public InspectContainerCmd withContainerId(String containerId);
+    InspectContainerCmd withContainerId(@Nonnull String containerId);
+
+    InspectContainerCmd withSize(Boolean showSize);
+
+    Boolean getSize();
 
     /**
      * @throws NotFoundException
      *             No such container
      */
     @Override
-    public InspectContainerResponse exec() throws NotFoundException;
+    InspectContainerResponse exec() throws NotFoundException;
 
-    public static interface Exec extends DockerCmdSyncExec<InspectContainerCmd, InspectContainerResponse> {
+    interface Exec extends DockerCmdSyncExec<InspectContainerCmd, InspectContainerResponse> {
     }
-
 }

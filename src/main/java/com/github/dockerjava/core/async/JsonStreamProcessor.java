@@ -10,11 +10,12 @@ import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.github.dockerjava.api.async.ResultCallback;
 
 /**
  *
- * @author marcus
+ * @author Marcus Linke
  *
  */
 public class JsonStreamProcessor<T> implements ResponseStreamProcessor<T> {
@@ -33,16 +34,20 @@ public class JsonStreamProcessor<T> implements ResponseStreamProcessor<T> {
     public void processResponseStream(InputStream response, ResultCallback<T> resultCallback) {
 
         resultCallback.onStart(response);
-        OBJECT_MAPPER.configure(com.fasterxml.jackson.core.JsonParser.Feature.AUTO_CLOSE_SOURCE, true);
+        OBJECT_MAPPER.configure(JsonParser.Feature.AUTO_CLOSE_SOURCE, true);
 
         try {
             JsonParser jp = JSON_FACTORY.createParser(response);
-            boolean closed = jp.isClosed();
+            Boolean closed = jp.isClosed();
             JsonToken nextToken = jp.nextToken();
             while (!closed && nextToken != null && nextToken != JsonToken.END_OBJECT) {
                 try {
-                    T next = OBJECT_MAPPER.readValue(jp, clazz);
-                    resultCallback.onNext(next);
+                    ObjectNode objectNode = OBJECT_MAPPER.readTree(jp);
+                    // exclude empty item serialization into class #461
+                    if (!objectNode.isEmpty(null)) {
+                        T next = OBJECT_MAPPER.treeToValue(objectNode, clazz);
+                        resultCallback.onNext(next);
+                    }
                 } catch (Exception e) {
                     resultCallback.onError(e);
                 }

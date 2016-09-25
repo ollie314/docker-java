@@ -4,84 +4,120 @@ import java.io.Closeable;
 import java.io.IOException;
 
 import com.github.dockerjava.core.DockerClientConfig;
+import com.github.dockerjava.core.RemoteApiVersion;
 
 public interface DockerCmdExecFactory extends Closeable {
 
-    public void init(DockerClientConfig dockerClientConfig);
+    void init(DockerClientConfig dockerClientConfig);
 
-    public AuthCmd.Exec createAuthCmdExec();
+    AuthCmd.Exec createAuthCmdExec();
 
-    public InfoCmd.Exec createInfoCmdExec();
+    InfoCmd.Exec createInfoCmdExec();
 
-    public PingCmd.Exec createPingCmdExec();
+    PingCmd.Exec createPingCmdExec();
 
-    public ExecCreateCmd.Exec createExecCmdExec();
+    ExecCreateCmd.Exec createExecCmdExec();
 
-    public VersionCmd.Exec createVersionCmdExec();
+    VersionCmd.Exec createVersionCmdExec();
 
-    public PullImageCmd.Exec createPullImageCmdExec();
+    PullImageCmd.Exec createPullImageCmdExec();
 
-    public PushImageCmd.Exec createPushImageCmdExec();
+    PushImageCmd.Exec createPushImageCmdExec();
 
-    public SaveImageCmd.Exec createSaveImageCmdExec();
+    SaveImageCmd.Exec createSaveImageCmdExec();
 
-    public CreateImageCmd.Exec createCreateImageCmdExec();
+    CreateImageCmd.Exec createCreateImageCmdExec();
 
-    public SearchImagesCmd.Exec createSearchImagesCmdExec();
+    LoadImageCmd.Exec createLoadImageCmdExec();
 
-    public RemoveImageCmd.Exec createRemoveImageCmdExec();
+    SearchImagesCmd.Exec createSearchImagesCmdExec();
 
-    public ListImagesCmd.Exec createListImagesCmdExec();
+    RemoveImageCmd.Exec createRemoveImageCmdExec();
 
-    public InspectImageCmd.Exec createInspectImageCmdExec();
+    ListImagesCmd.Exec createListImagesCmdExec();
 
-    public ListContainersCmd.Exec createListContainersCmdExec();
+    InspectImageCmd.Exec createInspectImageCmdExec();
 
-    public CreateContainerCmd.Exec createCreateContainerCmdExec();
+    ListContainersCmd.Exec createListContainersCmdExec();
 
-    public StartContainerCmd.Exec createStartContainerCmdExec();
+    CreateContainerCmd.Exec createCreateContainerCmdExec();
 
-    public InspectContainerCmd.Exec createInspectContainerCmdExec();
+    StartContainerCmd.Exec createStartContainerCmdExec();
 
-    public RemoveContainerCmd.Exec createRemoveContainerCmdExec();
+    InspectContainerCmd.Exec createInspectContainerCmdExec();
 
-    public WaitContainerCmd.Exec createWaitContainerCmdExec();
+    RemoveContainerCmd.Exec createRemoveContainerCmdExec();
 
-    public AttachContainerCmd.Exec createAttachContainerCmdExec();
+    WaitContainerCmd.Exec createWaitContainerCmdExec();
 
-    public ExecStartCmd.Exec createExecStartCmdExec();
+    AttachContainerCmd.Exec createAttachContainerCmdExec();
 
-    public InspectExecCmd.Exec createInspectExecCmdExec();
+    ExecStartCmd.Exec createExecStartCmdExec();
 
-    public LogContainerCmd.Exec createLogContainerCmdExec();
+    InspectExecCmd.Exec createInspectExecCmdExec();
 
-    public CopyFileFromContainerCmd.Exec createCopyFileFromContainerCmdExec();
+    LogContainerCmd.Exec createLogContainerCmdExec();
 
-    public StopContainerCmd.Exec createStopContainerCmdExec();
+    CopyFileFromContainerCmd.Exec createCopyFileFromContainerCmdExec();
 
-    public ContainerDiffCmd.Exec createContainerDiffCmdExec();
+    CopyArchiveFromContainerCmd.Exec createCopyArchiveFromContainerCmdExec();
 
-    public KillContainerCmd.Exec createKillContainerCmdExec();
+    CopyArchiveToContainerCmd.Exec createCopyArchiveToContainerCmdExec();
 
-    public RestartContainerCmd.Exec createRestartContainerCmdExec();
+    StopContainerCmd.Exec createStopContainerCmdExec();
 
-    public CommitCmd.Exec createCommitCmdExec();
+    ContainerDiffCmd.Exec createContainerDiffCmdExec();
 
-    public BuildImageCmd.Exec createBuildImageCmdExec();
+    KillContainerCmd.Exec createKillContainerCmdExec();
 
-    public TopContainerCmd.Exec createTopContainerCmdExec();
+    UpdateContainerCmd.Exec createUpdateContainerCmdExec();
 
-    public TagImageCmd.Exec createTagImageCmdExec();
+    /**
+     * Rename container.
+     *
+     * @since {@link RemoteApiVersion#VERSION_1_17}
+     */
+    RenameContainerCmd.Exec createRenameContainerCmdExec();
 
-    public PauseContainerCmd.Exec createPauseContainerCmdExec();
+    RestartContainerCmd.Exec createRestartContainerCmdExec();
 
-    public UnpauseContainerCmd.Exec createUnpauseContainerCmdExec();
+    CommitCmd.Exec createCommitCmdExec();
 
-    public EventsCmd.Exec createEventsCmdExec();
+    BuildImageCmd.Exec createBuildImageCmdExec();
 
-    public StatsCmd.Exec createStatsCmdExec();
+    TopContainerCmd.Exec createTopContainerCmdExec();
+
+    TagImageCmd.Exec createTagImageCmdExec();
+
+    PauseContainerCmd.Exec createPauseContainerCmdExec();
+
+    UnpauseContainerCmd.Exec createUnpauseContainerCmdExec();
+
+    EventsCmd.Exec createEventsCmdExec();
+
+    StatsCmd.Exec createStatsCmdExec();
+
+    CreateVolumeCmd.Exec createCreateVolumeCmdExec();
+
+    InspectVolumeCmd.Exec createInspectVolumeCmdExec();
+
+    RemoveVolumeCmd.Exec createRemoveVolumeCmdExec();
+
+    ListVolumesCmd.Exec createListVolumesCmdExec();
+
+    ListNetworksCmd.Exec createListNetworksCmdExec();
+
+    InspectNetworkCmd.Exec createInspectNetworkCmdExec();
+
+    CreateNetworkCmd.Exec createCreateNetworkCmdExec();
+
+    RemoveNetworkCmd.Exec createRemoveNetworkCmdExec();
+
+    ConnectToNetworkCmd.Exec createConnectToNetworkCmdExec();
+
+    DisconnectFromNetworkCmd.Exec createDisconnectFromNetworkCmdExec();
 
     @Override
-    public void close() throws IOException;
+    void close() throws IOException;
 
 }

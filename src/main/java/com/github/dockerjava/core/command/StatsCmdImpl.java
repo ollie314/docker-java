@@ -12,8 +12,9 @@ public class StatsCmdImpl extends AbstrAsyncDockerCmd<StatsCmd, Statistics> impl
 
     private String containerId;
 
-    public StatsCmdImpl(StatsCmd.Exec exec) {
+    public StatsCmdImpl(StatsCmd.Exec exec, String containerId) {
         super(exec);
+        withContainerId(containerId);
     }
 
     @Override
@@ -28,8 +29,4 @@ public class StatsCmdImpl extends AbstrAsyncDockerCmd<StatsCmd, Statistics> impl
         return containerId;
     }
 
-    @Override
-    public String toString() {
-        return new StringBuilder("stats").append(containerId != null ? " --id=" + containerId : "").toString();
-    }
 }

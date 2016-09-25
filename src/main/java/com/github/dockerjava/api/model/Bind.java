@@ -3,11 +3,14 @@ package com.github.dockerjava.api.model;
 import org.apache.commons.lang.builder.EqualsBuilder;
 import org.apache.commons.lang.builder.HashCodeBuilder;
 
+import java.io.Serializable;
+
 /**
- * Represents a host path being bind mounted as a {@link Volume} in a Docker container. The Bind can be in read only or
- * read write access mode.
+ * Represents a host path being bind mounted as a {@link Volume} in a Docker container.
+ * The Bind can be in read only or read write access mode.
  */
-public class Bind {
+public class Bind implements Serializable {
+    private static final long serialVersionUID = 1L;
 
     private String path;
 
@@ -15,14 +18,24 @@ public class Bind {
 
     private AccessMode accessMode;
 
+    /**
+     * @since {@link com.github.dockerjava.core.RemoteApiVersion#VERSION_1_17}
+     */
+    private SELContext secMode;
+
     public Bind(String path, Volume volume) {
-        this(path, volume, AccessMode.DEFAULT);
+        this(path, volume, AccessMode.DEFAULT, SELContext.DEFAULT);
     }
 
     public Bind(String path, Volume volume, AccessMode accessMode) {
+        this(path, volume, accessMode, SELContext.DEFAULT);
+    }
+
+    public Bind(String path, Volume volume, AccessMode accessMode, SELContext secMode) {
         this.path = path;
         this.volume = volume;
         this.accessMode = accessMode;
+        this.secMode = secMode;
     }
 
     public String getPath() {
@@ -37,9 +50,13 @@ public class Bind {
         return accessMode;
     }
 
+    public SELContext getSecMode() {
+        return secMode;
+    }
+
     /**
      * Parses a bind mount specification to a {@link Bind}.
-     * 
+     *
      * @param serialized
      *            the specification, e.g. <code>/host:/container:ro</code>
      * @return a {@link Bind} matching the specification
@@ -54,15 +71,25 @@ public class Bind {
                 return new Bind(parts[0], new Volume(parts[1]));
             }
             case 3: {
-                AccessMode accessMode = AccessMode.valueOf(parts[2].toLowerCase());
-                return new Bind(parts[0], new Volume(parts[1]), accessMode);
+                String[] flags = parts[2].split(",");
+                AccessMode accessMode = AccessMode.DEFAULT;
+                SELContext seMode = SELContext.DEFAULT;
+                for (String p : flags) {
+                    if (p.length() == 2) {
+                        accessMode = AccessMode.valueOf(p.toLowerCase());
+                    } else {
+                        seMode = SELContext.fromString(p);
+                    }
+                }
+
+                return new Bind(parts[0], new Volume(parts[1]), accessMode, seMode);
             }
             default: {
                 throw new IllegalArgumentException();
             }
             }
         } catch (Exception e) {
-            throw new IllegalArgumentException("Error parsing Bind '" + serialized + "'");
+            throw new IllegalArgumentException("Error parsing Bind '" + serialized + "'", e);
         }
     }
 
@@ -70,27 +97,40 @@ public class Bind {
     public boolean equals(Object obj) {
         if (obj instanceof Bind) {
             Bind other = (Bind) obj;
-            return new EqualsBuilder().append(path, other.getPath()).append(volume, other.getVolume())
-                    .append(accessMode, other.getAccessMode()).isEquals();
-        } else
+            return new EqualsBuilder()
+                    .append(path, other.getPath())
+                    .append(volume, other.getVolume())
+                    .append(accessMode, other.getAccessMode())
+                    .append(secMode, other.getSecMode())
+                    .isEquals();
+        } else {
             return super.equals(obj);
+        }
     }
 
     @Override
     public int hashCode() {
-        return new HashCodeBuilder().append(path).append(volume).append(accessMode).toHashCode();
+        return new HashCodeBuilder()
+                .append(path)
+                .append(volume)
+                .append(accessMode)
+                .append(secMode)
+                .toHashCode();
     }
 
     /**
-     * Returns a string representation of this {@link Bind} suitable for inclusion in a JSON message. The format is
-     * <code>&lt;host path&gt;:&lt;container path&gt;:&lt;access mode&gt;</code>, like the argument in
-     * {@link #parse(String)}.
-     * 
+     * Returns a string representation of this {@link Bind} suitable for inclusion in a JSON message.
+     * The format is <code>&lt;host path&gt;:&lt;container path&gt;:&lt;access mode&gt;</code>,
+     * like the argument in {@link #parse(String)}.
+     *
      * @return a string representation of this {@link Bind}
      */
     @Override
     public String toString() {
-        return path + ":" + volume.getPath() + ":" + accessMode.toString();
+        return String.format("%s:%s:%s%s",
+                path,
+                volume.getPath(),
+                accessMode.toString(),
+                secMode != SELContext.none ? "," + secMode.toString() : "");
     }
-
 }

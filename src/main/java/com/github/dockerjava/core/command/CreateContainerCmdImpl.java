@@ -1,13 +1,16 @@
 package com.github.dockerjava.core.command;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.github.dockerjava.api.ConflictException;
-import com.github.dockerjava.api.NotFoundException;
 import com.github.dockerjava.api.command.CreateContainerCmd;
 import com.github.dockerjava.api.command.CreateContainerResponse;
+import com.github.dockerjava.api.exception.ConflictException;
+import com.github.dockerjava.api.exception.NotFoundException;
 import com.github.dockerjava.api.model.Bind;
 import com.github.dockerjava.api.model.Capability;
+import com.github.dockerjava.api.model.ContainerNetwork;
 import com.github.dockerjava.api.model.Device;
 import com.github.dockerjava.api.model.ExposedPort;
 import com.github.dockerjava.api.model.ExposedPorts;
@@ -22,66 +25,56 @@ import com.github.dockerjava.api.model.Ulimit;
 import com.github.dockerjava.api.model.Volume;
 import com.github.dockerjava.api.model.Volumes;
 import com.github.dockerjava.api.model.VolumesFrom;
+import org.apache.commons.lang.builder.EqualsBuilder;
+import org.apache.commons.lang.builder.HashCodeBuilder;
 import org.apache.commons.lang.builder.ToStringBuilder;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Collections.singletonMap;
 
 /**
- *
  * Creates a new container.
- *
+ * `/containers/create`
  */
+@JsonInclude(Include.NON_NULL)
 public class CreateContainerCmdImpl extends AbstrDockerCmd<CreateContainerCmd, CreateContainerResponse> implements
         CreateContainerCmd {
 
     private String name;
 
     @JsonProperty("Hostname")
-    private String hostName = "";
+    private String hostName;
 
     @JsonProperty("Domainname")
-    private String domainName = "";
+    private String domainName;
 
     @JsonProperty("User")
-    private String user = "";
-
-    @JsonProperty("Memory")
-    private long memoryLimit = 0;
-
-    @JsonProperty("MemorySwap")
-    private long memorySwap = 0;
-
-    @JsonProperty("CpuShares")
-    private int cpuShares = 0;
-
-    @JsonProperty("CpuPeriod")
-    private Integer cpuPeriod;
-
-    @JsonProperty("Cpuset")
-    private String cpuset;
+    private String user;
 
     @JsonProperty("AttachStdin")
-    private boolean attachStdin = false;
+    private Boolean attachStdin;
 
     @JsonProperty("AttachStdout")
-    private boolean attachStdout = false;
+    private Boolean attachStdout;
 
     @JsonProperty("AttachStderr")
-    private boolean attachStderr = false;
+    private Boolean attachStderr;
 
     @JsonProperty("PortSpecs")
     private String[] portSpecs;
 
     @JsonProperty("Tty")
-    private boolean tty = false;
+    private Boolean tty;
 
     @JsonProperty("OpenStdin")
-    private boolean stdinOpen = false;
+    private Boolean stdinOpen;
 
     @JsonProperty("StdinOnce")
-    private boolean stdInOnce = false;
+    private Boolean stdInOnce;
 
     @JsonProperty("Env")
     private String[] env;
@@ -99,16 +92,22 @@ public class CreateContainerCmdImpl extends AbstrDockerCmd<CreateContainerCmd, C
     private Volumes volumes = new Volumes();
 
     @JsonProperty("WorkingDir")
-    private String workingDir = "";
+    private String workingDir;
 
     @JsonProperty("MacAddress")
     private String macAddress;
 
     @JsonProperty("NetworkDisabled")
-    private boolean networkDisabled = false;
+    private Boolean networkDisabled;
 
     @JsonProperty("ExposedPorts")
     private ExposedPorts exposedPorts = new ExposedPorts();
+
+    /**
+     * @since {@link com.github.dockerjava.core.RemoteApiVersion#VERSION_1_21}
+     */
+    @JsonProperty("StopSignal")
+    private String stopSignal;
 
     @JsonProperty("HostConfig")
     private HostConfig hostConfig = new HostConfig();
@@ -116,14 +115,17 @@ public class CreateContainerCmdImpl extends AbstrDockerCmd<CreateContainerCmd, C
     @JsonProperty("Labels")
     private Map<String, String> labels;
 
-    @JsonProperty("CpusetMems")
-    private String cpusetMems;
+    @JsonProperty("NetworkingConfig")
+    private NetworkingConfig networkingConfig;
 
-    @JsonProperty("BlkioWeight")
-    private Integer blkioWeight;
+    @JsonIgnore
+    private String ipv4Address = null;
 
-    @JsonProperty("OomKillDisable")
-    private Boolean oomKillDisable;
+    @JsonIgnore
+    private String ipv6Address = null;
+
+    @JsonIgnore
+    private List<String> aliases = null;
 
     public CreateContainerCmdImpl(CreateContainerCmd.Exec exec, String image) {
         super(exec);
@@ -139,7 +141,46 @@ public class CreateContainerCmdImpl extends AbstrDockerCmd<CreateContainerCmd, C
      */
     @Override
     public CreateContainerResponse exec() throws NotFoundException, ConflictException {
+        //code flow taken from https://github.com/docker/docker/blob/master/runconfig/opts/parse.go
+        ContainerNetwork containerNetwork = null;
+
+        if (ipv4Address != null || ipv6Address != null) {
+            containerNetwork = new ContainerNetwork()
+                    .withIpamConfig(new ContainerNetwork.Ipam()
+                            .withIpv4Address(ipv4Address)
+                            .withIpv6Address(ipv6Address)
+                    );
+
+        }
+
+        if (hostConfig.isUserDefinedNetwork() && hostConfig.getLinks().length > 0) {
+            if (containerNetwork == null) {
+                containerNetwork = new ContainerNetwork();
+            }
+
+            containerNetwork.withLinks(hostConfig.getLinks());
+        }
+
+        if (aliases != null) {
+            if (containerNetwork == null) {
+                containerNetwork = new ContainerNetwork();
+            }
+
+            containerNetwork.withAliases(aliases);
+        }
+
+        if (containerNetwork != null) {
+            networkingConfig = new NetworkingConfig()
+                    .withEndpointsConfig(singletonMap(hostConfig.getNetworkMode(), containerNetwork));
+        }
+
         return super.exec();
+    }
+
+    @Override
+    @JsonIgnore
+    public List<String> getAliases() {
+        return aliases;
     }
 
     @Override
@@ -149,16 +190,19 @@ public class CreateContainerCmdImpl extends AbstrDockerCmd<CreateContainerCmd, C
     }
 
     @Override
+    @JsonIgnore
     public Integer getBlkioWeight() {
-        return blkioWeight;
+        return hostConfig.getBlkioWeight();
     }
 
     @Override
+    @JsonIgnore
     public Capability[] getCapAdd() {
         return hostConfig.getCapAdd();
     }
 
     @Override
+    @JsonIgnore
     public Capability[] getCapDrop() {
         return hostConfig.getCapDrop();
     }
@@ -168,28 +212,28 @@ public class CreateContainerCmdImpl extends AbstrDockerCmd<CreateContainerCmd, C
         return cmd;
     }
 
-    public String getContainerIDFile() {
-        return hostConfig.getContainerIDFile();
-    }
-
     @Override
+    @JsonIgnore
     public Integer getCpuPeriod() {
-        return cpuPeriod;
+        return hostConfig.getCpuPeriod();
     }
 
     @Override
-    public String getCpuset() {
-        return cpuset;
+    @JsonIgnore
+    public String getCpusetCpus() {
+        return hostConfig.getCpusetCpus();
     }
 
     @Override
+    @JsonIgnore
     public String getCpusetMems() {
-        return cpusetMems;
+        return hostConfig.getCpusetMems();
     }
 
     @Override
-    public int getCpuShares() {
-        return cpuShares;
+    @JsonIgnore
+    public Integer getCpuShares() {
+        return hostConfig.getCpuShares();
     }
 
     @Override
@@ -231,6 +275,15 @@ public class CreateContainerCmdImpl extends AbstrDockerCmd<CreateContainerCmd, C
         return exposedPorts.getExposedPorts();
     }
 
+    /**
+     * @see #stopSignal
+     */
+    @JsonIgnore
+    @Override
+    public String getStopSignal() {
+        return stopSignal;
+    }
+
     @Override
     @JsonIgnore
     public String[] getExtraHosts() {
@@ -245,6 +298,16 @@ public class CreateContainerCmdImpl extends AbstrDockerCmd<CreateContainerCmd, C
     @Override
     public String getImage() {
         return image;
+    }
+
+    @Override
+    public String getIpv4Address() {
+        return ipv4Address;
+    }
+
+    @Override
+    public String getIpv6Address() {
+        return ipv6Address;
     }
 
     @Override
@@ -271,18 +334,21 @@ public class CreateContainerCmdImpl extends AbstrDockerCmd<CreateContainerCmd, C
         return hostConfig.getLogConfig();
     }
 
+    @Override
     public String getMacAddress() {
         return macAddress;
     }
 
     @Override
-    public long getMemoryLimit() {
-        return memoryLimit;
+    @JsonIgnore
+    public Long getMemory() {
+        return hostConfig.getMemory();
     }
 
     @Override
-    public long getMemorySwap() {
-        return memorySwap;
+    @JsonIgnore
+    public Long getMemorySwap() {
+        return hostConfig.getMemorySwap();
     }
 
     @Override
@@ -314,6 +380,7 @@ public class CreateContainerCmdImpl extends AbstrDockerCmd<CreateContainerCmd, C
     }
 
     @Override
+    @JsonIgnore
     public Ulimit[] getUlimits() {
         return hostConfig.getUlimits();
     }
@@ -341,58 +408,61 @@ public class CreateContainerCmdImpl extends AbstrDockerCmd<CreateContainerCmd, C
     }
 
     @Override
-    public boolean isAttachStderr() {
+    public Boolean isAttachStderr() {
         return attachStderr;
     }
 
     @Override
-    public boolean isAttachStdin() {
+    public Boolean isAttachStdin() {
         return attachStdin;
     }
 
     @Override
-    public boolean isAttachStdout() {
+    public Boolean isAttachStdout() {
         return attachStdout;
     }
 
     @Override
-    public boolean isNetworkDisabled() {
+    public Boolean isNetworkDisabled() {
         return networkDisabled;
     }
 
     @Override
-    public Boolean isOomKillDisable() {
-        return oomKillDisable;
+    @JsonIgnore
+    public Boolean getOomKillDisable() {
+        return hostConfig.getOomKillDisable();
     }
 
     @Override
     @JsonIgnore
-    public Boolean isPrivileged() {
-        return hostConfig.isPrivileged();
+    public Boolean getPrivileged() {
+        return hostConfig.getPrivileged();
     }
 
     @Override
     @JsonIgnore
-    public Boolean isPublishAllPorts() {
-        return hostConfig.isPublishAllPorts();
-    }
-
-    public boolean isReadonlyRootfs() {
-        return hostConfig.isReadonlyRootfs();
+    public Boolean getPublishAllPorts() {
+        return hostConfig.getPublishAllPorts();
     }
 
     @Override
-    public boolean isStdInOnce() {
+    @JsonIgnore
+    public Boolean getReadonlyRootfs() {
+        return hostConfig.getReadonlyRootfs();
+    }
+
+    @Override
+    public Boolean isStdInOnce() {
         return stdInOnce;
     }
 
     @Override
-    public boolean isStdinOpen() {
+    public Boolean isStdinOpen() {
         return stdinOpen;
     }
 
     @Override
-    public boolean isTty() {
+    public Boolean isTty() {
         return tty;
     }
 
@@ -403,25 +473,45 @@ public class CreateContainerCmdImpl extends AbstrDockerCmd<CreateContainerCmd, C
     }
 
     @Override
-    public String toString() {
-        return new ToStringBuilder(this).append("create container ").append(name != null ? "name=" + name + " " : "")
-                .append(this).toString();
+    public HostConfig getHostConfig() {
+        return hostConfig;
     }
 
     @Override
-    public CreateContainerCmdImpl withAttachStderr(boolean attachStderr) {
+    public String getCgroupParent() {
+        return hostConfig.getCgroupParent();
+    }
+
+    @Override
+    public CreateContainerCmd withAliases(String... aliases) {
+        this.aliases = Arrays.asList(aliases);
+        return this;
+    }
+
+    @Override
+    public CreateContainerCmd withAliases(List<String> aliases) {
+        checkNotNull(aliases, "aliases was not specified");
+        this.aliases = aliases;
+        return this;
+    }
+
+    @Override
+    public CreateContainerCmd withAttachStderr(Boolean attachStderr) {
+        checkNotNull(attachStderr, "attachStderr was not specified");
         this.attachStderr = attachStderr;
         return this;
     }
 
     @Override
-    public CreateContainerCmdImpl withAttachStdin(boolean attachStdin) {
+    public CreateContainerCmd withAttachStdin(Boolean attachStdin) {
+        checkNotNull(attachStdin, "attachStdin was not specified");
         this.attachStdin = attachStdin;
         return this;
     }
 
     @Override
-    public CreateContainerCmdImpl withAttachStdout(boolean attachStdout) {
+    public CreateContainerCmd withAttachStdout(Boolean attachStdout) {
+        checkNotNull(attachStdout, "attachStdout was not specified");
         this.attachStdout = attachStdout;
         return this;
     }
@@ -434,193 +524,296 @@ public class CreateContainerCmdImpl extends AbstrDockerCmd<CreateContainerCmd, C
     }
 
     @Override
+    public CreateContainerCmd withBinds(List<Bind> binds) {
+        checkNotNull(binds, "binds was not specified");
+        return withBinds(binds.toArray(new Bind[binds.size()]));
+    }
+
+    @Override
     public CreateContainerCmd withBlkioWeight(Integer blkioWeight) {
         checkNotNull(blkioWeight, "blkioWeight was not specified");
-        this.blkioWeight = blkioWeight;
-        return null;
+        hostConfig.withBlkioWeight(blkioWeight);
+        return this;
     }
 
     @Override
     public CreateContainerCmd withCapAdd(Capability... capAdd) {
         checkNotNull(capAdd, "capAdd was not specified");
-        hostConfig.setCapAdd(capAdd);
+        hostConfig.withCapAdd(capAdd);
         return this;
+    }
+
+    @Override
+    public CreateContainerCmd withCapAdd(List<Capability> capAdd) {
+        checkNotNull(capAdd, "capAdd was not specified");
+        return withCapAdd(capAdd.toArray(new Capability[capAdd.size()]));
     }
 
     @Override
     public CreateContainerCmd withCapDrop(Capability... capDrop) {
         checkNotNull(capDrop, "capDrop was not specified");
-        hostConfig.setCapDrop(capDrop);
+        hostConfig.withCapDrop(capDrop);
         return this;
     }
 
     @Override
-    public CreateContainerCmdImpl withCmd(String... cmd) {
+    public CreateContainerCmd withCapDrop(List<Capability> capDrop) {
+        checkNotNull(capDrop, "capDrop was not specified");
+        return withCapDrop(capDrop.toArray(new Capability[capDrop.size()]));
+    }
+
+    @Override
+    public CreateContainerCmd withCmd(String... cmd) {
         checkNotNull(cmd, "cmd was not specified");
         this.cmd = cmd;
         return this;
     }
 
     @Override
+    public CreateContainerCmd withCmd(List<String> cmd) {
+        checkNotNull(cmd, "cmd was not specified");
+        return withCmd(cmd.toArray(new String[cmd.size()]));
+    }
+
+    @Override
     public CreateContainerCmd withContainerIDFile(String containerIDFile) {
         checkNotNull(containerIDFile, "no containerIDFile was specified");
-        hostConfig.setContainerIDFile(containerIDFile);
+        hostConfig.withContainerIDFile(containerIDFile);
         return this;
     }
 
     @Override
     public CreateContainerCmd withCpuPeriod(Integer cpuPeriod) {
         checkNotNull(cpuPeriod, "cpuPeriod was not specified");
-        this.cpuPeriod = cpuPeriod;
+        hostConfig.withCpuPeriod(cpuPeriod);
         return this;
     }
 
     @Override
-    public CreateContainerCmdImpl withCpuset(String cpuset) {
-        checkNotNull(cpuset, "cpuset was not specified");
-        this.cpuset = cpuset;
+    public CreateContainerCmd withCpusetCpus(String cpusetCpus) {
+        checkNotNull(cpusetCpus, "cpusetCpus was not specified");
+        hostConfig.withCpusetCpus(cpusetCpus);
         return this;
     }
 
     @Override
     public CreateContainerCmd withCpusetMems(String cpusetMems) {
         checkNotNull(cpusetMems, "cpusetMems was not specified");
-        this.cpusetMems = cpusetMems;
-        return null;
+        hostConfig.withCpusetMems(cpusetMems);
+        return this;
     }
 
     @Override
-    public CreateContainerCmdImpl withCpuShares(int cpuShares) {
-        this.cpuShares = cpuShares;
+    public CreateContainerCmd withCpuShares(Integer cpuShares) {
+        checkNotNull(cpuShares, "cpuShares was not specified");
+        hostConfig.withCpuShares(cpuShares);
         return this;
     }
 
     @Override
     public CreateContainerCmd withDevices(Device... devices) {
         checkNotNull(devices, "devices was not specified");
-        this.hostConfig.setDevices(devices);
+        this.hostConfig.withDevices(devices);
         return this;
     }
 
     @Override
-    public CreateContainerCmdImpl withDns(String... dns) {
+    public CreateContainerCmd withDevices(List<Device> devices) {
+        checkNotNull(devices, "devices was not specified");
+        return withDevices(devices.toArray(new Device[devices.size()]));
+    }
+
+    @Override
+    public CreateContainerCmd withDns(String... dns) {
         checkNotNull(dns, "dns was not specified");
-        this.hostConfig.setDns(dns);
+        this.hostConfig.withDns(dns);
         return this;
+    }
+
+    @Override
+    public CreateContainerCmd withDns(List<String> dns) {
+        checkNotNull(dns, "dns was not specified");
+        return withDns(dns.toArray(new String[dns.size()]));
     }
 
     @Override
     public CreateContainerCmd withDnsSearch(String... dnsSearch) {
         checkNotNull(dnsSearch, "dnsSearch was not specified");
-        this.hostConfig.setDnsSearch(dnsSearch);
+        this.hostConfig.withDnsSearch(dnsSearch);
         return this;
     }
 
     @Override
-    public CreateContainerCmdImpl withDomainName(String domainName) {
+    public CreateContainerCmd withDnsSearch(List<String> dnsSearch) {
+        checkNotNull(dnsSearch, "dnsSearch was not specified");
+        return withDnsSearch(dnsSearch.toArray(new String[0]));
+    }
+
+    @Override
+    public CreateContainerCmd withDomainName(String domainName) {
         checkNotNull(domainName, "no domainName was specified");
         this.domainName = domainName;
         return this;
     }
 
     @Override
-    public CreateContainerCmdImpl withEntrypoint(String... entrypoint) {
+    public CreateContainerCmd withEntrypoint(String... entrypoint) {
         checkNotNull(entrypoint, "entrypoint was not specified");
         this.entrypoint = entrypoint;
         return this;
     }
 
     @Override
-    public CreateContainerCmdImpl withEnv(String... env) {
+    public CreateContainerCmd withEntrypoint(List<String> entrypoint) {
+        checkNotNull(entrypoint, "entrypoint was not specified");
+        return withEntrypoint(entrypoint.toArray(new String[entrypoint.size()]));
+    }
+
+    @Override
+    public CreateContainerCmd withEnv(String... env) {
         checkNotNull(env, "env was not specified");
         this.env = env;
         return this;
     }
 
     @Override
-    public CreateContainerCmdImpl withExposedPorts(ExposedPort... exposedPorts) {
+    public CreateContainerCmd withEnv(List<String> env) {
+        checkNotNull(env, "env was not specified");
+        return withEnv(env.toArray(new String[env.size()]));
+    }
+
+    @Override
+    public CreateContainerCmd withExposedPorts(ExposedPort... exposedPorts) {
         checkNotNull(exposedPorts, "exposedPorts was not specified");
         this.exposedPorts = new ExposedPorts(exposedPorts);
         return this;
     }
 
     @Override
-    public CreateContainerCmd withExtraHosts(String... extraHosts) {
-        checkNotNull(extraHosts, "extraHosts was not specified");
-        this.hostConfig.setExtraHosts(extraHosts);
+    public CreateContainerCmd withStopSignal(String stopSignal) {
+        checkNotNull(stopSignal, "stopSignal wasn't specified.");
+        this.stopSignal = stopSignal;
         return this;
     }
 
     @Override
-    public CreateContainerCmdImpl withHostName(String hostName) {
+    public CreateContainerCmd withExposedPorts(List<ExposedPort> exposedPorts) {
+        checkNotNull(exposedPorts, "exposedPorts was not specified");
+        return withExposedPorts(exposedPorts.toArray(new ExposedPort[exposedPorts.size()]));
+    }
+
+    @Override
+    public CreateContainerCmd withExtraHosts(String... extraHosts) {
+        checkNotNull(extraHosts, "extraHosts was not specified");
+        this.hostConfig.withExtraHosts(extraHosts);
+        return this;
+    }
+
+    @Override
+    public CreateContainerCmd withExtraHosts(List<String> extraHosts) {
+        checkNotNull(extraHosts, "extraHosts was not specified");
+        return withExtraHosts(extraHosts.toArray(new String[extraHosts.size()]));
+    }
+
+    @Override
+    public CreateContainerCmd withHostName(String hostName) {
         checkNotNull(hostConfig, "no hostName was specified");
         this.hostName = hostName;
         return this;
     }
 
     @Override
-    public CreateContainerCmdImpl withImage(String image) {
+    public CreateContainerCmd withImage(String image) {
         checkNotNull(image, "no image was specified");
         this.image = image;
         return this;
     }
 
     @Override
-    public CreateContainerCmdImpl withLabels(Map<String, String> labels) {
+    public CreateContainerCmd withIpv4Address(String ipv4Address) {
+        checkNotNull(ipv4Address, "no ipv4Address was specified");
+        this.ipv4Address = ipv4Address;
+        return this;
+    }
+
+    @Override
+    public CreateContainerCmd withIpv6Address(String ipv6Address) {
+        checkNotNull(ipv6Address, "no ipv6Address was specified");
+        this.ipv6Address = ipv6Address;
+        return this;
+    }
+
+    @Override
+    public CreateContainerCmd withLabels(Map<String, String> labels) {
         checkNotNull(labels, "labels was not specified");
         this.labels = labels;
         return this;
     }
 
     @Override
-    public CreateContainerCmdImpl withLinks(Link... links) {
+    public CreateContainerCmd withLinks(Link... links) {
         checkNotNull(links, "links was not specified");
         this.hostConfig.setLinks(links);
         return this;
     }
 
     @Override
+    public CreateContainerCmd withLinks(List<Link> links) {
+        checkNotNull(links, "links was not specified");
+        return withLinks(links.toArray(new Link[links.size()]));
+    }
+
+    @Override
     public CreateContainerCmd withLxcConf(LxcConf... lxcConf) {
         checkNotNull(lxcConf, "lxcConf was not specified");
-        this.hostConfig.setLxcConf(lxcConf);
+        this.hostConfig.withLxcConf(lxcConf);
         return this;
+    }
+
+    @Override
+    public CreateContainerCmd withLxcConf(List<LxcConf> lxcConf) {
+        checkNotNull(lxcConf, "lxcConf was not specified");
+        return withLxcConf(lxcConf.toArray(new LxcConf[0]));
     }
 
     @Override
     public CreateContainerCmd withLogConfig(LogConfig logConfig) {
         checkNotNull(logConfig, "logConfig was not specified");
-        this.hostConfig.setLogConfig(logConfig);
+        this.hostConfig.withLogConfig(logConfig);
         return this;
     }
 
     @Override
-    public CreateContainerCmdImpl withMacAddress(String macAddress) {
+    public CreateContainerCmd withMacAddress(String macAddress) {
         checkNotNull(macAddress, "macAddress was not specified");
         this.macAddress = macAddress;
         return this;
     }
 
     @Override
-    public CreateContainerCmdImpl withMemoryLimit(long memoryLimit) {
-        this.memoryLimit = memoryLimit;
+    public CreateContainerCmd withMemory(Long memory) {
+        checkNotNull(memory, "memory was not specified");
+        hostConfig.withMemory(memory);
         return this;
     }
 
     @Override
-    public CreateContainerCmdImpl withMemorySwap(long memorySwap) {
-        this.memorySwap = memorySwap;
+    public CreateContainerCmd withMemorySwap(Long memorySwap) {
+        checkNotNull(memorySwap, "memorySwap was not specified");
+        hostConfig.withMemorySwap(memorySwap);
         return this;
     }
 
     @Override
-    public CreateContainerCmdImpl withName(String name) {
+    public CreateContainerCmd withName(String name) {
         checkNotNull(name, "name was not specified");
         this.name = name;
         return this;
     }
 
     @Override
-    public CreateContainerCmdImpl withNetworkDisabled(boolean disableNetwork) {
+    public CreateContainerCmd withNetworkDisabled(Boolean disableNetwork) {
+        checkNotNull(disableNetwork, "disableNetwork was not specified");
         this.networkDisabled = disableNetwork;
         return this;
     }
@@ -628,121 +821,198 @@ public class CreateContainerCmdImpl extends AbstrDockerCmd<CreateContainerCmd, C
     @Override
     public CreateContainerCmd withNetworkMode(String networkMode) {
         checkNotNull(networkMode, "networkMode was not specified");
-        this.hostConfig.setNetworkMode(networkMode);
+        this.hostConfig.withNetworkMode(networkMode);
         return this;
     }
 
     @Override
     public CreateContainerCmd withOomKillDisable(Boolean oomKillDisable) {
         checkNotNull(oomKillDisable, "oomKillDisable was not specified");
-        this.oomKillDisable = oomKillDisable;
+        hostConfig.withOomKillDisable(oomKillDisable);
         return this;
     }
 
     @Override
     public CreateContainerCmd withPortBindings(PortBinding... portBindings) {
         checkNotNull(portBindings, "portBindings was not specified");
-        this.hostConfig.setPortBindings(new Ports(portBindings));
+        this.hostConfig.withPortBindings(new Ports(portBindings));
         return this;
+    }
+
+    @Override
+    public CreateContainerCmd withPortBindings(List<PortBinding> portBindings) {
+        checkNotNull(portBindings, "portBindings was not specified");
+        return withPortBindings(portBindings.toArray(new PortBinding[0]));
     }
 
     @Override
     public CreateContainerCmd withPortBindings(Ports portBindings) {
         checkNotNull(portBindings, "portBindings was not specified");
-        this.hostConfig.setPortBindings(portBindings);
+        this.hostConfig.withPortBindings(portBindings);
         return this;
     }
 
     @Override
-    public CreateContainerCmdImpl withPortSpecs(String... portSpecs) {
+    public CreateContainerCmd withPortSpecs(String... portSpecs) {
         checkNotNull(portSpecs, "portSpecs was not specified");
         this.portSpecs = portSpecs;
         return this;
     }
 
     @Override
-    public CreateContainerCmd withPrivileged(boolean privileged) {
-        this.hostConfig.setPrivileged(privileged);
+    public CreateContainerCmd withPortSpecs(List<String> portSpecs) {
+        checkNotNull(portSpecs, "portSpecs was not specified");
+        return withPortSpecs(portSpecs.toArray(new String[portSpecs.size()]));
+    }
+
+    @Override
+    public CreateContainerCmd withPrivileged(Boolean privileged) {
+        checkNotNull(privileged, "no privileged was specified");
+        this.hostConfig.withPrivileged(privileged);
         return this;
     }
 
     @Override
-    public CreateContainerCmd withPublishAllPorts(boolean publishAllPorts) {
-        this.hostConfig.setPublishAllPorts(publishAllPorts);
+    public CreateContainerCmd withPublishAllPorts(Boolean publishAllPorts) {
+        checkNotNull(publishAllPorts, "no publishAllPorts was specified");
+        this.hostConfig.withPublishAllPorts(publishAllPorts);
         return this;
     }
 
     @Override
-    public CreateContainerCmd withReadonlyRootfs(boolean readonlyRootfs) {
-        hostConfig.setReadonlyRootfs(readonlyRootfs);
+    public CreateContainerCmd withReadonlyRootfs(Boolean readonlyRootfs) {
+        checkNotNull(readonlyRootfs, "no readonlyRootfs was specified");
+        hostConfig.withReadonlyRootfs(readonlyRootfs);
         return this;
     }
 
     @Override
     public CreateContainerCmd withRestartPolicy(RestartPolicy restartPolicy) {
         checkNotNull(restartPolicy, "restartPolicy was not specified");
-        this.hostConfig.setRestartPolicy(restartPolicy);
+        this.hostConfig.withRestartPolicy(restartPolicy);
         return this;
     }
 
     @Override
-    public CreateContainerCmdImpl withStdInOnce(boolean stdInOnce) {
+    public CreateContainerCmd withStdInOnce(Boolean stdInOnce) {
+        checkNotNull(stdInOnce, "no stdInOnce was specified");
         this.stdInOnce = stdInOnce;
         return this;
     }
 
     @Override
-    public CreateContainerCmdImpl withStdinOpen(boolean stdinOpen) {
+    public CreateContainerCmd withStdinOpen(Boolean stdinOpen) {
+        checkNotNull(stdinOpen, "no stdinOpen was specified");
         this.stdinOpen = stdinOpen;
         return this;
     }
 
     @Override
-    public CreateContainerCmdImpl withTty(boolean tty) {
+    public CreateContainerCmd withTty(Boolean tty) {
+        checkNotNull(tty, "no tty was specified");
         this.tty = tty;
         return this;
     }
 
     @Override
-    public CreateContainerCmd withUlimits(Ulimit[] ulimits) {
+    public CreateContainerCmd withUlimits(Ulimit... ulimits) {
         checkNotNull(ulimits, "no ulimits was specified");
-        hostConfig.setUlimits(ulimits);
+        hostConfig.withUlimits(ulimits);
         return this;
     }
 
     @Override
-    public CreateContainerCmdImpl withUser(String user) {
+    public CreateContainerCmd withUlimits(List<Ulimit> ulimits) {
+        checkNotNull(ulimits, "no ulimits was specified");
+        return withUlimits(ulimits.toArray(new Ulimit[ulimits.size()]));
+    }
+
+    @Override
+    public CreateContainerCmd withUser(String user) {
         checkNotNull(user, "user was not specified");
         this.user = user;
         return this;
     }
 
     @Override
-    public CreateContainerCmdImpl withVolumes(Volume... volumes) {
+    public CreateContainerCmd withVolumes(Volume... volumes) {
         checkNotNull(volumes, "volumes was not specified");
         this.volumes = new Volumes(volumes);
         return this;
     }
 
     @Override
-    public CreateContainerCmdImpl withVolumesFrom(VolumesFrom... volumesFrom) {
+    public CreateContainerCmd withVolumes(List<Volume> volumes) {
+        checkNotNull(volumes, "volumes was not specified");
+        return withVolumes(volumes.toArray(new Volume[volumes.size()]));
+    }
+
+    @Override
+    public CreateContainerCmd withVolumesFrom(VolumesFrom... volumesFrom) {
         checkNotNull(volumesFrom, "volumesFrom was not specified");
-        this.hostConfig.setVolumesFrom(volumesFrom);
+        this.hostConfig.withVolumesFrom(volumesFrom);
         return this;
     }
 
     @Override
-    public CreateContainerCmdImpl withWorkingDir(String workingDir) {
+    public CreateContainerCmd withVolumesFrom(List<VolumesFrom> volumesFrom) {
+        checkNotNull(volumesFrom, "volumesFrom was not specified");
+        return withVolumesFrom(volumesFrom.toArray(new VolumesFrom[volumesFrom.size()]));
+    }
+
+    @Override
+    public CreateContainerCmd withWorkingDir(String workingDir) {
         checkNotNull(workingDir, "workingDir was not specified");
         this.workingDir = workingDir;
         return this;
     }
 
     @Override
-    public CreateContainerCmd withPidMode(String pidMode) {
-        checkNotNull(pidMode, "pidMode was not specified");
-        this.hostConfig.setPidMode(pidMode);
+    public CreateContainerCmd withCgroupParent(final String cgroupParent) {
+        checkNotNull(cgroupParent, "cgroupParent was not specified");
+        this.hostConfig.withCgroupParent(cgroupParent);
         return this;
     }
 
+    @Override
+    public CreateContainerCmd withPidMode(String pidMode) {
+        checkNotNull(pidMode, "pidMode was not specified");
+        this.hostConfig.withPidMode(pidMode);
+        return this;
+    }
+
+    @Override
+    public CreateContainerCmd withHostConfig(HostConfig hostConfig) {
+        this.hostConfig = hostConfig;
+        return this;
+    }
+
+    @Override
+    public String toString() {
+        return ToStringBuilder.reflectionToString(this);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        return EqualsBuilder.reflectionEquals(this, o);
+    }
+
+    @Override
+    public int hashCode() {
+        return HashCodeBuilder.reflectionHashCode(this);
+    }
+
+    public static class NetworkingConfig {
+        @JsonProperty("EndpointsConfig")
+        public Map<String, ContainerNetwork> endpointsConfig;
+
+        public Map<String, ContainerNetwork> getEndpointsConfig() {
+            return endpointsConfig;
+        }
+
+        public NetworkingConfig withEndpointsConfig(Map<String, ContainerNetwork> endpointsConfig) {
+            this.endpointsConfig = endpointsConfig;
+            return this;
+        }
+    }
 }

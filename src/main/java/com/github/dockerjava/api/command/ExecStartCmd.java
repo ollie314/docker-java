@@ -2,35 +2,44 @@ package com.github.dockerjava.api.command;
 
 import java.io.InputStream;
 
-import com.github.dockerjava.api.NotFoundException;
+import javax.annotation.CheckForNull;
+import javax.annotation.Nonnull;
 
-public interface ExecStartCmd extends SyncDockerCmd<InputStream> {
+import com.github.dockerjava.api.async.ResultCallback;
+import com.github.dockerjava.api.exception.NotFoundException;
+import com.github.dockerjava.api.model.Frame;
 
-    public String getExecId();
+public interface ExecStartCmd extends AsyncDockerCmd<ExecStartCmd, Frame> {
 
-    public ExecStartCmd withExecId(String execId);
+    @CheckForNull
+    String getExecId();
 
-    public boolean hasDetachEnabled();
+    @CheckForNull
+    Boolean hasDetachEnabled();
 
-    public ExecStartCmd withDetach(boolean detach);
+    @CheckForNull
+    Boolean hasTtyEnabled();
 
-    public ExecStartCmd withDetach();
+    @CheckForNull
+    InputStream getStdin();
 
-    public boolean hasTtyEnabled();
+    ExecStartCmd withDetach(Boolean detach);
 
-    public ExecStartCmd withTty(boolean tty);
+    ExecStartCmd withExecId(@Nonnull String execId);
 
-    public ExecStartCmd withTty();
+    ExecStartCmd withTty(Boolean tty);
+
+    ExecStartCmd withStdIn(InputStream stdin);
 
     /**
-     * Its the responsibility of the caller to consume and/or close the {@link InputStream} to prevent connection leaks.
      *
-     * @throws com.github.dockerjava.api.NotFoundException
+     * @throws NotFoundException
      *             No such exec instance
      */
     @Override
-    public InputStream exec() throws NotFoundException;
+    <T extends ResultCallback<Frame>> T exec(T resultCallback);
 
-    public static interface Exec extends DockerCmdSyncExec<ExecStartCmd, InputStream> {
+    interface Exec extends DockerCmdAsyncExec<ExecStartCmd, Frame> {
     }
+
 }

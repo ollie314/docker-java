@@ -1,6 +1,9 @@
 package com.github.dockerjava.api.command;
 
-import com.github.dockerjava.api.NotFoundException;
+import javax.annotation.CheckForNull;
+import javax.annotation.Nonnull;
+
+import com.github.dockerjava.api.exception.NotFoundException;
 
 /**
  * Unpause a container.
@@ -11,18 +14,19 @@ import com.github.dockerjava.api.NotFoundException;
  */
 public interface UnpauseContainerCmd extends SyncDockerCmd<Void> {
 
-    public String getContainerId();
+    @CheckForNull
+    String getContainerId();
 
-    public UnpauseContainerCmd withContainerId(String containerId);
+    UnpauseContainerCmd withContainerId(@Nonnull String containerId);
 
     /**
      * @throws NotFoundException
      *             No such container
      */
     @Override
-    public Void exec() throws NotFoundException;
+    Void exec() throws NotFoundException;
 
-    public static interface Exec extends DockerCmdSyncExec<UnpauseContainerCmd, Void> {
+    interface Exec extends DockerCmdSyncExec<UnpauseContainerCmd, Void> {
     }
 
 }

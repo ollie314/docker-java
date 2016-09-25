@@ -1,6 +1,9 @@
 package com.github.dockerjava.api.command;
 
-import com.github.dockerjava.api.NotFoundException;
+import javax.annotation.CheckForNull;
+import javax.annotation.Nonnull;
+
+import com.github.dockerjava.api.exception.NotFoundException;
 
 /**
  *
@@ -9,43 +12,36 @@ import com.github.dockerjava.api.NotFoundException;
  */
 public interface RemoveImageCmd extends SyncDockerCmd<Void> {
 
-    public String getImageId();
+    @CheckForNull
+    String getImageId();
 
-    public boolean hasForceEnabled();
+    @CheckForNull
+    Boolean hasForceEnabled();
 
-    public boolean hasNoPruneEnabled();
+    @CheckForNull
+    Boolean hasNoPruneEnabled();
 
-    public RemoveImageCmd withImageId(String imageId);
-
-    /**
-     * force delete of an image, even if it's tagged in multiple repositories
-     */
-    public RemoveImageCmd withForce();
+    RemoveImageCmd withImageId(@Nonnull String imageId);
 
     /**
      * force parameter to force delete of an image, even if it's tagged in multiple repositories
      */
-    public RemoveImageCmd withForce(boolean force);
-
-    /**
-     * prevent the deletion of parent images
-     */
-    public RemoveImageCmd withNoPrune();
+    RemoveImageCmd withForce(Boolean force);
 
     /**
      * noprune parameter to prevent the deletion of parent images
      *
      */
-    public RemoveImageCmd withNoPrune(boolean noPrune);
+    RemoveImageCmd withNoPrune(Boolean noPrune);
 
     /**
      * @throws NotFoundException
      *             No such image
      */
     @Override
-    public Void exec() throws NotFoundException;
+    Void exec() throws NotFoundException;
 
-    public static interface Exec extends DockerCmdSyncExec<RemoveImageCmd, Void> {
+    interface Exec extends DockerCmdSyncExec<RemoveImageCmd, Void> {
     }
 
 }

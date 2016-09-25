@@ -1,26 +1,32 @@
 package com.github.dockerjava.api.command;
 
-import com.github.dockerjava.api.NotFoundException;
+import javax.annotation.CheckForNull;
+import javax.annotation.Nonnull;
+
+import com.github.dockerjava.api.async.ResultCallback;
+import com.github.dockerjava.api.exception.NotFoundException;
+import com.github.dockerjava.api.model.WaitResponse;
 
 /**
  * Wait a container
  *
  * Block until container stops, then returns its exit code
  */
-public interface WaitContainerCmd extends SyncDockerCmd<Integer> {
+public interface WaitContainerCmd extends AsyncDockerCmd<WaitContainerCmd, WaitResponse> {
 
-    public String getContainerId();
+    @CheckForNull
+    String getContainerId();
 
-    public WaitContainerCmd withContainerId(String containerId);
+    WaitContainerCmd withContainerId(@Nonnull String containerId);
 
     /**
      * @throws NotFoundException
      *             container not found
      */
     @Override
-    public Integer exec() throws NotFoundException;
+    <T extends ResultCallback<WaitResponse>> T exec(T resultCallback);
 
-    public static interface Exec extends DockerCmdSyncExec<WaitContainerCmd, Integer> {
+    interface Exec extends DockerCmdAsyncExec<WaitContainerCmd, WaitResponse> {
     }
 
 }

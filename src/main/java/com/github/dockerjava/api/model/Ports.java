@@ -1,16 +1,5 @@
 package com.github.dockerjava.api.model;
 
-import static org.apache.commons.lang.StringUtils.isEmpty;
-
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Map.Entry;
-
-import org.apache.commons.lang.ArrayUtils;
-import org.apache.commons.lang.builder.EqualsBuilder;
-
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -23,34 +12,45 @@ import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.node.NullNode;
-import com.github.dockerjava.api.command.InspectContainerResponse.NetworkSettings;
+import org.apache.commons.lang.ArrayUtils;
+import org.apache.commons.lang.builder.EqualsBuilder;
+
+import java.io.IOException;
+import java.io.Serializable;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Map.Entry;
+
+import static org.apache.commons.lang.StringUtils.isEmpty;
 
 /**
  * A container for port bindings, made available as a {@link Map} via its {@link #getBindings()} method.
  * <p>
- * <i>Note: This is an abstraction used for querying existing port bindings from a container configuration. It is not to
- * be confused with the {@link PortBinding} abstraction used for adding new port bindings to a container.</i>
- * 
+ * <i>Note: This is an abstraction used for querying existing port bindings from a container configuration. It is not to be confused with
+ * the {@link PortBinding} abstraction used for adding new port bindings to a container.</i>
+ *
  * @see HostConfig#getPortBindings()
  * @see NetworkSettings#getPorts()
  */
+@SuppressWarnings(value = "checkstyle:equalshashcode")
 @JsonDeserialize(using = Ports.Deserializer.class)
 @JsonSerialize(using = Ports.Serializer.class)
-public class Ports {
+public class Ports implements Serializable {
+    private static final long serialVersionUID = 1L;
 
     private final Map<ExposedPort, Binding[]> ports = new HashMap<ExposedPort, Binding[]>();
 
     /**
-     * Creates a {@link Ports} object with no {@link PortBinding}s. Use {@link #bind(ExposedPort, Binding)} or
-     * {@link #add(PortBinding...)} to add {@link PortBinding}s.
+     * Creates a {@link Ports} object with no {@link PortBinding}s. Use {@link #bind(ExposedPort, Binding)} or {@link #add(PortBinding...)}
+     * to add {@link PortBinding}s.
      */
     public Ports() {
     }
 
     /**
-     * Creates a {@link Ports} object with an initial {@link PortBinding} for the specified {@link ExposedPort} and
-     * {@link Binding}. Use {@link #bind(ExposedPort, Binding)} or {@link #add(PortBinding...)} to add more
-     * {@link PortBinding}s.
+     * Creates a {@link Ports} object with an initial {@link PortBinding} for the specified {@link ExposedPort} and {@link Binding}. Use
+     * {@link #bind(ExposedPort, Binding)} or {@link #add(PortBinding...)} to add more {@link PortBinding}s.
      */
     public Ports(ExposedPort exposedPort, Binding host) {
         bind(exposedPort, host);
@@ -71,7 +71,7 @@ public class Ports {
             if (binding == null) {
                 ports.put(exposedPort, null);
             } else {
-                ports.put(exposedPort, new Binding[] { binding });
+                ports.put(exposedPort, new Binding[] {binding});
             }
         }
     }
@@ -91,9 +91,8 @@ public class Ports {
     }
 
     /**
-     * Returns the port bindings in the format used by the Docker remote API, i.e. the {@link Binding}s grouped by
-     * {@link ExposedPort}.
-     * 
+     * Returns the port bindings in the format used by the Docker remote API, i.e. the {@link Binding}s grouped by {@link ExposedPort}.
+     *
      * @return the port bindings as a {@link Map} that contains one or more {@link Binding}s per {@link ExposedPort}.
      */
     public Map<ExposedPort, Binding[]> getBindings() {
@@ -111,93 +110,107 @@ public class Ports {
     // }
 
     /**
-     * Creates a {@link Binding} for the given IP address and port number.
-     */
-    public static Binding Binding(String hostIp, Integer hostPort) {
-        return new Binding(hostIp, hostPort);
-    }
-
-    /**
-     * Creates a {@link Binding} for the given port number, leaving the IP address undefined.
-     */
-    public static Binding Binding(Integer hostPort) {
-        return new Binding(hostPort);
-    }
-
-    /**
-     * A {@link Binding} represents a socket on the Docker host that is used in a {@link PortBinding}. It is
-     * characterized by an {@link #getHostIp() IP address} and a {@link #getHostPort() port number}. Both properties may
-     * be <code>null</code> in order to let Docker assign them dynamically/using defaults.
-     * 
+     * A {@link Binding} represents a socket on the Docker host that is used in a {@link PortBinding}. It is characterized by an
+     * {@link #getHostIp() IP address} and a {@link #getHostPortSpec() port spec}. Both properties may be <code>null</code> in order to
+     * let Docker assign them dynamically/using defaults.
+     *
      * @see Ports#bind(ExposedPort, Binding)
      * @see ExposedPort
      */
     public static class Binding {
 
-        private final String hostIp;
-
-        private final Integer hostPort;
-
         /**
-         * Creates a {@link Binding} for the given {@link #getHostIp() IP address} and {@link #getHostPort() port
-         * number}.
-         * 
+         * Creates a {@link Binding} for the given {@link #getHostPortSpec() port spec}, leaving the {@link #getHostIp() IP address}
+         * undefined.
+         *
          * @see Ports#bind(ExposedPort, Binding)
          * @see ExposedPort
          */
-        public Binding(String hostIp, Integer hostPort) {
-            this.hostIp = isEmpty(hostIp) ? null : hostIp;
-            this.hostPort = hostPort;
+        public static Binding bindPortSpec(String portSpec) {
+            return new Binding(null, portSpec);
         }
 
         /**
-         * Creates a {@link Binding} for the given {@link #getHostPort() port number}, leaving the {@link #getHostIp()
-         * IP address} undefined.
-         * 
-         * @see Ports#bind(ExposedPort, Binding)
-         * @see ExposedPort
-         */
-        public Binding(Integer hostPort) {
-            this(null, hostPort);
-        }
-
-        /**
-         * Creates a {@link Binding} for the given {@link #getHostIp() IP address}, leaving the {@link #getHostPort()
-         * port number} undefined.
-         */
-        public Binding(String hostIp) {
-            this(hostIp, null);
-        }
-
-        /**
-         * Creates a {@link Binding} with both {@link #getHostIp() IP address} and {@link #getHostPort() port number}
+         * Creates a {@link Binding} for the given {@link #getHostIp() IP address}, leaving the {@link #getHostPortSpec() port spec}
          * undefined.
          */
-        public Binding() {
-            this(null, null);
+        public static Binding bindIp(String hostIp) {
+            return new Binding(hostIp, null);
         }
 
         /**
-         * @return the IP address on the Docker host. May be <code>null</code>, in which case Docker will bind the port
-         *         to all interfaces (<code>0.0.0.0</code>).
+         * Creates a {@link Binding} for the given {@link #getHostIp() IP address} and port number.
+         */
+        public static Binding bindIpAndPort(String hostIp, int port) {
+            return new Binding(hostIp, "" + port);
+        }
+
+        /**
+         * Creates a {@link Binding} for the given {@link #getHostIp() IP address} and port range.
+         */
+        public static Binding bindIpAndPortRange(String hostIp, int lowPort, int highPort) {
+            return new Binding(hostIp, lowPort + "-" + highPort);
+        }
+
+        /**
+         * Creates a {@link Binding} for the given port range, leaving the {@link #getHostIp() IP address}
+         * undefined.
+         */
+        public static Binding bindPortRange(int lowPort, int highPort) {
+            return bindIpAndPortRange(null, lowPort, highPort);
+        }
+
+        /**
+         * Creates a {@link Binding} for the given port leaving the {@link #getHostIp() IP address}
+         * undefined.
+         */
+        public static Binding bindPort(int port) {
+            return bindIpAndPort(null, port);
+        }
+
+        /**
+         * Creates an empty {@link Binding}.
+         */
+        public static Binding empty() {
+            return new Binding(null, null);
+        }
+
+        private final String hostIp;
+
+        private final String hostPortSpec;
+
+        /**
+         * Creates a {@link Binding} for the given {@link #getHostIp() host IP address} and {@link #getHostPortSpec() host port spec}.
+         *
+         * @see Ports#bind(ExposedPort, Binding)
+         * @see ExposedPort
+         */
+        public Binding(String hostIp, String hostPortSpec) {
+            this.hostIp = isEmpty(hostIp) ? null : hostIp;
+            this.hostPortSpec = hostPortSpec;
+        }
+
+        /**
+         * @return the IP address on the Docker host. May be <code>null</code>, in which case Docker will bind the port to all interfaces (
+         *         <code>0.0.0.0</code>).
          */
         public String getHostIp() {
             return hostIp;
         }
 
         /**
-         * @return the port number on the Docker host. May be <code>null</code>, in which case Docker will dynamically
-         *         assign a port.
+         * @return the port spec for the binding on the Docker host. May reference a single port ("1234"), a port range ("1234-2345") or
+         *         <code>null</code>, in which case Docker will dynamically assign a port.
          */
-        public Integer getHostPort() {
-            return hostPort;
+        public String getHostPortSpec() {
+            return hostPortSpec;
         }
 
         /**
          * Parses a textual host and port specification (as used by the Docker CLI) to a {@link Binding}.
          * <p>
-         * Legal syntax: <code>IP|IP:port|port</code>
-         * 
+         * Legal syntax: <code>IP|IP:portSpec|portSpec</code> where <code>portSpec</code> is either a single port or a port range
+         *
          * @param serialized
          *            serialized the specification, e.g. <code>127.0.0.1:80</code>
          * @return a {@link Binding} matching the specification
@@ -207,20 +220,20 @@ public class Ports {
         public static Binding parse(String serialized) throws IllegalArgumentException {
             try {
                 if (serialized.isEmpty()) {
-                    return new Binding();
+                    return Binding.empty();
                 }
 
                 String[] parts = serialized.split(":");
                 switch (parts.length) {
-                case 2: {
-                    return new Binding(parts[0], Integer.valueOf(parts[1]));
-                }
-                case 1: {
-                    return parts[0].contains(".") ? new Binding(parts[0]) : new Binding(Integer.valueOf(parts[0]));
-                }
-                default: {
-                    throw new IllegalArgumentException();
-                }
+                    case 2: {
+                        return new Binding(parts[0], parts[1]);
+                    }
+                    case 1: {
+                        return parts[0].contains(".") ? Binding.bindIp(parts[0]) : Binding.bindPortSpec(parts[0]);
+                    }
+                    default: {
+                        throw new IllegalArgumentException();
+                    }
                 }
             } catch (Exception e) {
                 throw new IllegalArgumentException("Error parsing Binding '" + serialized + "'");
@@ -228,19 +241,19 @@ public class Ports {
         }
 
         /**
-         * Returns a string representation of this {@link Binding} suitable for inclusion in a JSON message. The format
-         * is <code>[IP:]Port</code>, like the argument in {@link #parse(String)}.
-         * 
+         * Returns a string representation of this {@link Binding} suitable for inclusion in a JSON message. The format is
+         * <code>[IP:]Port</code>, like the argument in {@link #parse(String)}.
+         *
          * @return a string representation of this {@link Binding}
          */
         @Override
         public String toString() {
             if (isEmpty(hostIp)) {
-                return Integer.toString(hostPort);
-            } else if (hostPort == null) {
+                return hostPortSpec;
+            } else if (hostPortSpec == null) {
                 return hostIp;
             } else {
-                return hostIp + ":" + hostPort;
+                return hostIp + ":" + hostPortSpec;
             }
         }
 
@@ -248,10 +261,11 @@ public class Ports {
         public boolean equals(Object obj) {
             if (obj instanceof Binding) {
                 Binding other = (Binding) obj;
-                return new EqualsBuilder().append(hostIp, other.getHostIp()).append(hostPort, other.getHostPort())
+                return new EqualsBuilder().append(hostIp, other.getHostIp()).append(hostPortSpec, other.getHostPortSpec())
                         .isEquals();
-            } else
+            } else {
                 return super.equals(obj);
+            }
         }
     }
 
@@ -274,7 +288,7 @@ public class Ports {
                         JsonNode bindingNode = bindingsArray.get(i);
                         if (!bindingNode.equals(NullNode.getInstance())) {
                             String hostIp = bindingNode.get("HostIp").textValue();
-                            int hostPort = bindingNode.get("HostPort").asInt();
+                            String hostPort = bindingNode.get("HostPort").textValue();
                             out.bind(ExposedPort.parse(portNode.getKey()), new Binding(hostIp, hostPort));
                         }
                     }
@@ -298,8 +312,7 @@ public class Ports {
                     for (Binding binding : entry.getValue()) {
                         jsonGen.writeStartObject();
                         jsonGen.writeStringField("HostIp", binding.getHostIp() == null ? "" : binding.getHostIp());
-                        jsonGen.writeStringField("HostPort", binding.getHostPort() == null ? "" : binding.getHostPort()
-                                .toString());
+                        jsonGen.writeStringField("HostPort", binding.getHostPortSpec() == null ? "" : binding.getHostPortSpec());
                         jsonGen.writeEndObject();
                     }
                     jsonGen.writeEndArray();

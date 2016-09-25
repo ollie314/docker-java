@@ -1,52 +1,91 @@
 package com.github.dockerjava.api.command;
 
 import java.util.List;
+import java.util.Map;
+
+import javax.annotation.CheckForNull;
 
 import com.github.dockerjava.api.model.Container;
-import com.github.dockerjava.api.model.Filters;
 
 /**
  * List containers
  *
- * @param showAll
- *            - true or false, Show all containers. Only running containers are shown by default.
- * @param showSize
- *            - true or false, Show the containers sizes. This is false by default.
- * @param limit
- *            - Show `limit` last created containers, include non-running ones. There is no limit by default.
- * @param sinceId
- *            - Show only containers created since Id, include non-running ones.
- * @param beforeId
- *            - Show only containers created before Id, include non-running ones.
- *
  */
 public interface ListContainersCmd extends SyncDockerCmd<List<Container>> {
 
-    public int getLimit();
+    @CheckForNull
+    String getBeforeId();
 
-    public boolean hasShowSizeEnabled();
+    @CheckForNull
+    Map<String, List<String>> getFilters();
 
-    public boolean hasShowAllEnabled();
+    @CheckForNull
+    Integer getLimit();
 
-    public String getSinceId();
+    @CheckForNull
+    String getSinceId();
 
-    public String getBeforeId();
+    @CheckForNull
+    Boolean hasShowAllEnabled();
 
-    public Filters getFilters();
+    @CheckForNull
+    Boolean hasShowSizeEnabled();
 
-    public ListContainersCmd withShowAll(boolean showAll);
+    /**
+     * @param before
+     *            - Show only containers created before Id, include non-running ones.
+     */
+    ListContainersCmd withBefore(String before);
 
-    public ListContainersCmd withShowSize(boolean showSize);
+    /**
+     * @param exitcode
+     *            - Show only containers that exited with the passed exitcode.
+     */
+    ListContainersCmd withExitcodeFilter(Integer exitcode);
 
-    public ListContainersCmd withLimit(int limit);
+    /**
+     * @param status
+     *            - Show only containers with the passed status (created|restarting|running|paused|exited).
+     */
+    ListContainersCmd withStatusFilter(String status);
 
-    public ListContainersCmd withSince(String since);
+    /**
+     * @param labels
+     *            - Show only containers with the passed labels.
+     */
+    ListContainersCmd withLabelFilter(String... labels);
 
-    public ListContainersCmd withBefore(String before);
+    /**
+     * @param labels
+     *            - Show only containers with the passed labels. Labels is a {@link Map} that contains label keys and values
+     */
+    ListContainersCmd withLabelFilter(Map<String, String> labels);
 
-    public ListContainersCmd withFilters(Filters filters);
+    /**
+     * @param limit
+     *            - Show `limit` last created containers, include non-running ones. There is no limit by default.
+     */
+    ListContainersCmd withLimit(Integer limit);
 
-    public static interface Exec extends DockerCmdSyncExec<ListContainersCmd, List<Container>> {
+    /**
+     * @param showAll
+     *            - Show all containers. Only running containers are shown by default.
+     */
+    ListContainersCmd withShowAll(Boolean showAll);
+
+    /**
+     * @param showSize
+     *            - Show the containers sizes. This is false by default.
+     */
+    ListContainersCmd withShowSize(Boolean showSize);
+
+    /**
+     * @param since
+     *            - Show only containers created since Id, include non-running ones.
+     */
+    ListContainersCmd withSince(String since);
+
+    interface Exec extends DockerCmdSyncExec<ListContainersCmd, List<Container>> {
     }
 
 }

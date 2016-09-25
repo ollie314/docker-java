@@ -2,6 +2,9 @@ package com.github.dockerjava.api.command;
 
 import java.util.List;
 
+import javax.annotation.CheckForNull;
+import javax.annotation.Nonnull;
+
 import com.github.dockerjava.api.model.SearchItem;
 
 /**
@@ -13,11 +16,12 @@ import com.github.dockerjava.api.model.SearchItem;
  */
 public interface SearchImagesCmd extends SyncDockerCmd<List<SearchItem>> {
 
-    public String getTerm();
+    @CheckForNull
+    String getTerm();
 
-    public SearchImagesCmd withTerm(String term);
+    SearchImagesCmd withTerm(@Nonnull String term);
 
-    public static interface Exec extends DockerCmdSyncExec<SearchImagesCmd, List<SearchItem>> {
+    interface Exec extends DockerCmdSyncExec<SearchImagesCmd, List<SearchItem>> {
     }
 
 }

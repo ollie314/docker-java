@@ -7,6 +7,8 @@ import java.util.Arrays;
 import com.github.dockerjava.api.model.Frame;
 import com.github.dockerjava.api.model.StreamType;
 
+import javax.annotation.CheckForNull;
+
 /**
  * Breaks the input into frame. Similar to how a buffered reader would readLies.
  * <p/>
@@ -16,11 +18,11 @@ public class FrameReader implements AutoCloseable {
 
     private static final int HEADER_SIZE = 8;
 
+    private final byte[] rawBuffer = new byte[1000];
+
     private final InputStream inputStream;
 
-    private boolean rawStreamDetected = false;
-
-    private final byte[] rawBuffer = new byte[1000];
+    private Boolean rawStreamDetected = false;
 
     public FrameReader(InputStream inputStream) {
         this.inputStream = inputStream;
@@ -28,28 +30,30 @@ public class FrameReader implements AutoCloseable {
 
     private static StreamType streamType(byte streamType) {
         switch (streamType) {
-        case 0:
-            return StreamType.STDIN;
-        case 1:
-            return StreamType.STDOUT;
-        case 2:
-            return StreamType.STDERR;
-        default:
-            return StreamType.RAW;
+            case 0:
+                return StreamType.STDIN;
+            case 1:
+                return StreamType.STDOUT;
+            case 2:
+                return StreamType.STDERR;
+            default:
+                return StreamType.RAW;
         }
     }
 
     /**
      * @return A frame, or null if no more frames.
      */
+    @CheckForNull
     public Frame readFrame() throws IOException {
 
         if (rawStreamDetected) {
-
             int read = inputStream.read(rawBuffer);
+            if (read == -1) {
+                return null;
+            }
 
             return new Frame(StreamType.RAW, Arrays.copyOf(rawBuffer, read));
-
         } else {
 
             byte[] header = new byte[HEADER_SIZE];
@@ -64,6 +68,8 @@ public class FrameReader implements AutoCloseable {
                 }
                 actualHeaderSize += headerCount;
             } while (actualHeaderSize < HEADER_SIZE);
+
+            // HexDump.dump(header, 0, System.err, 0);
 
             StreamType streamType = streamType(header[0]);
 

@@ -3,25 +3,31 @@ package com.github.dockerjava.api.model;
 import org.apache.commons.lang.builder.ToStringBuilder;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.io.Serializable;
+
 /**
- * Created by ben on 12/12/13.
+ * @author ben
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class DriverStatus {
+@JsonInclude(Include.NON_NULL)
+public class DriverStatus implements Serializable {
+    private static final long serialVersionUID = 1L;
 
     @JsonProperty("Root Dir")
     private String rootDir;
 
     @JsonProperty("Dirs")
-    private int dirs;
+    private Integer dirs;
 
     public String getRootDir() {
         return rootDir;
     }
 
-    public int getDirs() {
+    public Integer getDirs() {
         return dirs;
     }
 

@@ -4,6 +4,7 @@ import static com.github.dockerjava.api.model.InternetProtocol.TCP;
 import static com.github.dockerjava.api.model.InternetProtocol.UDP;
 
 import java.io.IOException;
+import java.io.Serializable;
 import java.util.Map.Entry;
 
 import org.apache.commons.lang.builder.EqualsBuilder;
@@ -24,13 +25,14 @@ import com.fasterxml.jackson.databind.node.NullNode;
 import com.github.dockerjava.api.model.Ports.Binding;
 
 /**
- * Represents a container port that Docker exposes to external clients. The port is defined by its {@link #getPort()
- * port number} and an {@link InternetProtocol}. It can be published by Docker by
- * {@link Ports#bind(ExposedPort, Binding) binding} it to a host port, represented by a {@link Binding}.
+ * Represents a container port that Docker exposes to external clients. The port is defined by its {@link #getPort() port number} and an
+ * {@link InternetProtocol}. It can be published by Docker by {@link Ports#bind(ExposedPort, Binding) binding} it to a host port,
+ * represented by a {@link Binding}.
  */
 @JsonDeserialize(using = ExposedPort.Deserializer.class)
 @JsonSerialize(using = ExposedPort.Serializer.class)
-public class ExposedPort {
+public class ExposedPort implements Serializable {
+    private static final long serialVersionUID = 1L;
 
     private final InternetProtocol protocol;
 
@@ -38,7 +40,7 @@ public class ExposedPort {
 
     /**
      * Creates an {@link ExposedPort} for the given parameters.
-     * 
+     *
      * @param port
      *            the {@link #getPort() port number}
      * @param protocol
@@ -51,7 +53,7 @@ public class ExposedPort {
 
     /**
      * Creates an {@link ExposedPort} for the given {@link #getPort() port number} and {@link InternetProtocol#DEFAULT}.
-     * 
+     *
      * @param port
      *            the {@link #getPort() port number}
      */
@@ -61,7 +63,7 @@ public class ExposedPort {
 
     /**
      * Creates an {@link ExposedPort} for the given parameters.
-     * 
+     *
      * @param scheme
      *            the {@link #getScheme() scheme}, <code>tcp</code> or <code>udp</code>
      * @param port
@@ -112,7 +114,7 @@ public class ExposedPort {
 
     /**
      * Parses a textual port specification (as used by the Docker CLI) to an {@link ExposedPort}.
-     * 
+     *
      * @param serialized
      *            the specification, e.g. <code>80/tcp</code>
      * @return an {@link ExposedPort} matching the specification
@@ -123,12 +125,12 @@ public class ExposedPort {
         try {
             String[] parts = serialized.split("/");
             switch (parts.length) {
-            case 1:
-                return new ExposedPort(Integer.valueOf(parts[0]));
-            case 2:
-                return new ExposedPort(Integer.valueOf(parts[0]), InternetProtocol.parse(parts[1]));
-            default:
-                throw new IllegalArgumentException();
+                case 1:
+                    return new ExposedPort(Integer.parseInt(parts[0]));
+                case 2:
+                    return new ExposedPort(Integer.parseInt(parts[0]), InternetProtocol.parse(parts[1]));
+                default:
+                    throw new IllegalArgumentException();
             }
         } catch (Exception e) {
             throw new IllegalArgumentException("Error parsing ExposedPort '" + serialized + "'");
@@ -136,9 +138,9 @@ public class ExposedPort {
     }
 
     /**
-     * Returns a string representation of this {@link ExposedPort} suitable for inclusion in a JSON message. The format
-     * is <code>port/protocol</code>, like the argument in {@link #parse(String)}.
-     * 
+     * Returns a string representation of this {@link ExposedPort} suitable for inclusion in a JSON message. The format is
+     * <code>port/protocol</code>, like the argument in {@link #parse(String)}.
+     *
      * @return a string representation of this {@link ExposedPort}
      */
     @Override
@@ -151,8 +153,9 @@ public class ExposedPort {
         if (obj instanceof ExposedPort) {
             ExposedPort other = (ExposedPort) obj;
             return new EqualsBuilder().append(protocol, other.getProtocol()).append(port, other.getPort()).isEquals();
-        } else
+        } else {
             return super.equals(obj);
+        }
     }
 
     @Override

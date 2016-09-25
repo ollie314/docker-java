@@ -6,16 +6,14 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
+import java.util.HashMap;
+import java.util.Map;
 
 import com.github.dockerjava.api.command.BuildImageCmd;
 import com.github.dockerjava.api.model.AuthConfigurations;
 import com.github.dockerjava.api.model.BuildResponseItem;
-import com.github.dockerjava.core.FilePathUtil;
 import com.github.dockerjava.core.dockerfile.Dockerfile;
-import org.apache.commons.lang.builder.ReflectionToStringBuilder;
-import org.apache.commons.lang.builder.ToStringStyle;
-
-import javax.annotation.CheckForNull;
+import com.github.dockerjava.core.util.FilePathUtil;
 
 /**
  *
@@ -24,46 +22,39 @@ import javax.annotation.CheckForNull;
  */
 public class BuildImageCmdImpl extends AbstrAsyncDockerCmd<BuildImageCmd, BuildResponseItem> implements BuildImageCmd {
 
-    @CheckForNull
     private InputStream tarInputStream;
 
-    @CheckForNull
     private String tag;
 
-    private boolean noCache;
+    private Boolean noCache;
 
-    private boolean remove = true;
+    private Boolean remove = true;
 
-    private boolean quiet;
+    private Boolean quiet;
 
-    private boolean pull;
+    private Boolean pull;
 
-    @CheckForNull
     private AuthConfigurations buildAuthConfigs;
 
-    @CheckForNull
     private File dockerFile;
 
-    @CheckForNull
     private File baseDirectory;
 
-    @CheckForNull
     private String cpusetcpus;
 
-    @CheckForNull
     private Long memory;
 
-    @CheckForNull
     private String cpushares;
 
-    @CheckForNull
     private Boolean forcerm;
 
-    @CheckForNull
     private Long memswap;
 
-    @CheckForNull
+    private Long shmsize;
+
     private URI remote;
+
+    private Map<String, String> buildArgs;
 
     public BuildImageCmdImpl(BuildImageCmd.Exec exec) {
         super(exec);
@@ -100,32 +91,27 @@ public class BuildImageCmdImpl extends AbstrAsyncDockerCmd<BuildImageCmd, BuildR
     }
 
     @Override
-    public boolean hasNoCacheEnabled() {
+    public Boolean hasNoCacheEnabled() {
         return noCache;
     }
 
     @Override
-    public boolean hasRemoveEnabled() {
+    public Boolean hasRemoveEnabled() {
         return remove;
     }
 
     @Override
-    public boolean isForcerm() {
-        return forcerm != null && forcerm;
-    }
-
-    @Override
-    public Boolean getForcerm() {
+    public Boolean isForcerm() {
         return forcerm;
     }
 
     @Override
-    public boolean isQuiet() {
+    public Boolean isQuiet() {
         return quiet;
     }
 
     @Override
-    public boolean hasPullEnabled() {
+    public Boolean hasPullEnabled() {
         return pull;
     }
 
@@ -158,6 +144,11 @@ public class BuildImageCmdImpl extends AbstrAsyncDockerCmd<BuildImageCmd, BuildR
         return cpusetcpus;
     }
 
+    @Override
+    public Map<String, String> getBuildArgs() {
+        return buildArgs;
+    }
+
     // getter lib specific
 
     @Override
@@ -168,6 +159,14 @@ public class BuildImageCmdImpl extends AbstrAsyncDockerCmd<BuildImageCmd, BuildR
     @Override
     public InputStream getTarInputStream() {
         return tarInputStream;
+    }
+
+    /**
+     * @see #shmsize
+     */
+    @Override
+    public Long getShmsize() {
+        return shmsize;
     }
 
     // setters
@@ -186,30 +185,15 @@ public class BuildImageCmdImpl extends AbstrAsyncDockerCmd<BuildImageCmd, BuildR
     }
 
     @Override
-    public BuildImageCmdImpl withNoCache() {
-        return withNoCache(true);
-    }
-
-    @Override
-    public BuildImageCmdImpl withNoCache(boolean noCache) {
+    public BuildImageCmdImpl withNoCache(Boolean noCache) {
         this.noCache = noCache;
         return this;
     }
 
     @Override
-    public BuildImageCmdImpl withRemove() {
-        return withRemove(true);
-    }
-
-    @Override
-    public BuildImageCmdImpl withRemove(boolean rm) {
+    public BuildImageCmdImpl withRemove(Boolean rm) {
         this.remove = rm;
         return this;
-    }
-
-    @Override
-    public BuildImageCmd withForcerm() {
-        return withForcerm(true);
     }
 
     @Override
@@ -219,35 +203,25 @@ public class BuildImageCmdImpl extends AbstrAsyncDockerCmd<BuildImageCmd, BuildR
     }
 
     @Override
-    public BuildImageCmdImpl withQuiet() {
-        return withQuiet(true);
-    }
-
-    @Override
-    public BuildImageCmdImpl withQuiet(boolean quiet) {
+    public BuildImageCmdImpl withQuiet(Boolean quiet) {
         this.quiet = quiet;
         return this;
     }
 
     @Override
-    public BuildImageCmdImpl withPull() {
-        return withPull(true);
-    }
-
-    @Override
-    public BuildImageCmdImpl withPull(boolean pull) {
+    public BuildImageCmdImpl withPull(Boolean pull) {
         this.pull = pull;
         return this;
     }
 
     @Override
-    public BuildImageCmd withMemory(long memory) {
+    public BuildImageCmd withMemory(Long memory) {
         this.memory = memory;
         return this;
     }
 
     @Override
-    public BuildImageCmd withMemswap(long memswap) {
+    public BuildImageCmd withMemswap(Long memswap) {
         this.memswap = memswap;
         return this;
     }
@@ -264,6 +238,15 @@ public class BuildImageCmdImpl extends AbstrAsyncDockerCmd<BuildImageCmd, BuildR
         return this;
     }
 
+    @Override
+    public BuildImageCmd withBuildArg(String key, String value) {
+        if (this.buildArgs == null) {
+            this.buildArgs = new HashMap<String, String>();
+        }
+        this.buildArgs.put(key, value);
+        return this;
+    }
+
     // lib specific
 
     @Override
@@ -275,18 +258,21 @@ public class BuildImageCmdImpl extends AbstrAsyncDockerCmd<BuildImageCmd, BuildR
     @Override
     public BuildImageCmdImpl withDockerfile(File dockerfile) {
         checkNotNull(dockerfile);
-        if (!dockerfile.exists())
+        if (!dockerfile.exists()) {
             throw new IllegalArgumentException("Dockerfile does not exist");
-        if (!dockerfile.isFile())
+        }
+        if (!dockerfile.isFile()) {
             throw new IllegalArgumentException("Not a directory");
+        }
 
-        if (baseDirectory == null)
+        if (baseDirectory == null) {
             withBaseDirectory(dockerfile.getParentFile());
+        }
 
         this.dockerFile = dockerfile;
 
         try {
-            withTarInputStream(new Dockerfile(dockerfile).parse().buildDockerFolderTar(baseDirectory));
+            withTarInputStream(new Dockerfile(dockerfile, baseDirectory).parse().buildDockerFolderTar());
         } catch (IOException e) {
             // we just created the file this should never happen.
             throw new RuntimeException(e);
@@ -308,6 +294,15 @@ public class BuildImageCmdImpl extends AbstrAsyncDockerCmd<BuildImageCmd, BuildR
         return this;
     }
 
+    /**
+     * @see #shmsize
+     */
+    @Override
+    public BuildImageCmd withShmsize(Long shmsize) {
+        this.shmsize = shmsize;
+        return this;
+    }
+
     @Override
     public void close() {
         super.close();
@@ -319,8 +314,4 @@ public class BuildImageCmdImpl extends AbstrAsyncDockerCmd<BuildImageCmd, BuildR
         }
     }
 
-    @Override
-    public String toString() {
-        return ReflectionToStringBuilder.toString(this, ToStringStyle.SIMPLE_STYLE);
-    }
 }

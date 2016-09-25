@@ -12,7 +12,7 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
-import com.github.dockerjava.api.NotFoundException;
+import com.github.dockerjava.api.exception.NotFoundException;
 import com.github.dockerjava.client.AbstractDockerClientTest;
 
 @Test(groups = "integration")
@@ -49,15 +49,11 @@ public class TagImageCmdImplTest extends AbstractDockerClientTest {
         dockerClient.removeImageCmd("docker-java/busybox:" + tag).exec();
     }
 
-    @Test
+    @Test(expectedExceptions = NotFoundException.class)
     public void tagNonExistingImage() throws Exception {
-        String tag = "" + RandomUtils.nextInt(Integer.MAX_VALUE);
 
-        try {
-            dockerClient.tagImageCmd("non-existing", "docker-java/busybox", tag).exec();
-            fail("expected NotFoundException");
-        } catch (NotFoundException e) {
-        }
+        String tag = "" + RandomUtils.nextInt(Integer.MAX_VALUE);
+        dockerClient.tagImageCmd("non-existing", "docker-java/busybox", tag).exec();
     }
 
 }

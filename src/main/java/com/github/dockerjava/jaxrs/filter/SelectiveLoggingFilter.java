@@ -13,9 +13,8 @@ import org.slf4j.Logger;
 
 /**
  * A version of the logging filter that will avoid trying to log entities which can cause issues with the console.
- * 
- * @author sfitts
  *
+ * @author sfitts
  */
 public class SelectiveLoggingFilter extends LoggingFilter {
 
@@ -28,7 +27,7 @@ public class SelectiveLoggingFilter extends LoggingFilter {
         SKIPPED_CONTENT = Collections.unmodifiableSet(s);
     }
 
-    public SelectiveLoggingFilter(Logger logger, boolean b) {
+    public SelectiveLoggingFilter(Logger logger, Boolean b) {
         super(logger, b);
     }
 

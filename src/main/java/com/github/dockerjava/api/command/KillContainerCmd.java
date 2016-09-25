@@ -1,28 +1,33 @@
 package com.github.dockerjava.api.command;
 
-import com.github.dockerjava.api.NotFoundException;
+import javax.annotation.CheckForNull;
+import javax.annotation.Nonnull;
+
+import com.github.dockerjava.api.exception.NotFoundException;
 
 /**
  * Kill a running container.
  */
 public interface KillContainerCmd extends SyncDockerCmd<Void> {
 
-    public String getContainerId();
+    @CheckForNull
+    String getContainerId();
 
-    public String getSignal();
+    @CheckForNull
+    String getSignal();
 
-    public KillContainerCmd withContainerId(String containerId);
+    KillContainerCmd withContainerId(@Nonnull String containerId);
 
-    public KillContainerCmd withSignal(String signal);
+    KillContainerCmd withSignal(String signal);
 
     /**
      * @throws NotFoundException
      *             No such container
      */
     @Override
-    public Void exec() throws NotFoundException;
+    Void exec() throws NotFoundException;
 
-    public static interface Exec extends DockerCmdSyncExec<KillContainerCmd, Void> {
+    interface Exec extends DockerCmdSyncExec<KillContainerCmd, Void> {
     }
 
 }

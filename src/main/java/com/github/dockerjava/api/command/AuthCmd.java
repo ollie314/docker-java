@@ -1,6 +1,9 @@
 package com.github.dockerjava.api.command;
 
-import com.github.dockerjava.api.UnauthorizedException;
+import javax.annotation.CheckForNull;
+import javax.annotation.Nonnull;
+
+import com.github.dockerjava.api.exception.UnauthorizedException;
 import com.github.dockerjava.api.model.AuthConfig;
 import com.github.dockerjava.api.model.AuthResponse;
 
@@ -11,20 +14,21 @@ import com.github.dockerjava.api.model.AuthResponse;
  */
 public interface AuthCmd extends SyncDockerCmd<AuthResponse> {
 
-    public AuthConfig getAuthConfig();
+    @CheckForNull
+    AuthConfig getAuthConfig();
 
-    public AuthCmd withAuthConfig(AuthConfig authConfig);
+    AuthCmd withAuthConfig(@Nonnull AuthConfig authConfig);
 
     /**
-     * @return The status. Based on it's value you may mean you need to authorise your account, e.g.:
-     *         "Account created. Please see the documentation of the registry http://localhost:5000/v1/ for instructions how to activate it."
+     * @return The status. Based on it's value you may mean you need to authorise your account, e.g.: "Account created. Please see the
+     *         documentation of the registry http://localhost:5000/v1/ for instructions how to activate it."
      * @throws UnauthorizedException
      *             If you're not authorised (e.g. bad password).
      */
     @Override
-    public AuthResponse exec() throws UnauthorizedException;
+    AuthResponse exec() throws UnauthorizedException;
 
-    public static interface Exec extends DockerCmdSyncExec<AuthCmd, AuthResponse> {
+    interface Exec extends DockerCmdSyncExec<AuthCmd, AuthResponse> {
     }
 
 }

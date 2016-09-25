@@ -1,11 +1,12 @@
 package com.github.dockerjava.jaxrs;
 
-import com.github.dockerjava.api.command.RemoveImageCmd;
-import com.github.dockerjava.core.DockerClientConfig;
+import javax.ws.rs.client.WebTarget;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.ws.rs.client.WebTarget;
+import com.github.dockerjava.api.command.RemoveImageCmd;
+import com.github.dockerjava.core.DockerClientConfig;
 
 public class RemoveImageCmdExec extends AbstrSyncDockerCmdExec<RemoveImageCmd, Void> implements RemoveImageCmd.Exec {
 
@@ -17,12 +18,13 @@ public class RemoveImageCmdExec extends AbstrSyncDockerCmdExec<RemoveImageCmd, V
 
     @Override
     protected Void execute(RemoveImageCmd command) {
-        WebTarget webResource = getBaseResource().path("/images/" + command.getImageId())
-                .queryParam("force", command.hasForceEnabled() ? "1" : "0")
-                .queryParam("noprune", command.hasNoPruneEnabled() ? "1" : "0");
+        WebTarget webTarget = getBaseResource().path("/images/" + command.getImageId());
 
-        LOGGER.trace("DELETE: {}", webResource);
-        webResource.request().delete().close();
+        webTarget = booleanQueryParam(webTarget, "force", command.hasForceEnabled());
+        webTarget = booleanQueryParam(webTarget, "noprune", command.hasNoPruneEnabled());
+
+        LOGGER.trace("DELETE: {}", webTarget);
+        webTarget.request().delete().close();
 
         return null;
     }

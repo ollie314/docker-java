@@ -1,16 +1,21 @@
 package com.github.dockerjava.jaxrs;
 
+import static com.github.dockerjava.core.RemoteApiVersion.UNKNOWN_VERSION;
+import static com.github.dockerjava.core.RemoteApiVersion.VERSION_1_19;
+import static com.google.common.base.Preconditions.checkNotNull;
+
+import java.io.IOException;
+
+import javax.ws.rs.client.WebTarget;
+
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import org.apache.commons.codec.binary.Base64;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.dockerjava.api.model.AuthConfig;
 import com.github.dockerjava.api.model.AuthConfigurations;
 import com.github.dockerjava.core.DockerClientConfig;
 import com.github.dockerjava.core.RemoteApiVersion;
-import org.apache.commons.codec.binary.Base64;
-
-import javax.ws.rs.client.WebTarget;
-import java.io.IOException;
-
-import static com.google.common.base.Preconditions.checkNotNull;
 
 public abstract class AbstrDockerCmdExec {
 
@@ -44,16 +49,36 @@ public abstract class AbstrDockerCmdExec {
     protected String registryConfigs(AuthConfigurations authConfigs) {
         try {
             final String json;
-            if (dockerClientConfig.getVersion().isGreaterOrEqual(RemoteApiVersion.VERSION_1_19)) {
-                json = new ObjectMapper().writeValueAsString(authConfigs.getConfigs());
+            final ObjectMapper objectMapper = new ObjectMapper();
+            final RemoteApiVersion apiVersion = dockerClientConfig.getApiVersion();
+
+            if (apiVersion.equals(UNKNOWN_VERSION)) {
+                ObjectNode rootNode = objectMapper.valueToTree(authConfigs.getConfigs()); // all registries
+                final ObjectNode authNodes = objectMapper.valueToTree(authConfigs); // wrapped in "configs":{}
+                rootNode.setAll(authNodes); // merge 2 variants
+                json = rootNode.toString();
+            } else if (apiVersion.isGreaterOrEqual(VERSION_1_19)) {
+                json = objectMapper.writeValueAsString(authConfigs.getConfigs());
             } else {
-                json = new ObjectMapper().writeValueAsString(authConfigs);
+                json = objectMapper.writeValueAsString(authConfigs);
             }
 
             return Base64.encodeBase64String(json.getBytes());
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    protected boolean bool(Boolean bool) {
+        return bool != null && bool;
+    }
+
+    protected WebTarget booleanQueryParam(WebTarget webTarget, String name, Boolean value) {
+        if (bool(value)) {
+            webTarget = webTarget.queryParam(name, bool(value) + "");
+        }
+
+        return webTarget;
     }
 
 }

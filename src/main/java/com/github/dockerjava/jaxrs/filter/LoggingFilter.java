@@ -109,15 +109,15 @@ public class LoggingFilter implements ContainerRequestFilter, ClientRequestFilte
     @SuppressWarnings("NonConstantLogger")
     private final Logger logger;
 
-    private final AtomicLong _id = new AtomicLong(0);
+    private final AtomicLong aid = new AtomicLong(0);
 
-    private final boolean printEntity;
+    private final Boolean printEntity;
 
     private final int maxEntitySize;
 
     /**
-     * Create a logging filter logging the request and response to a default JDK logger, named as the fully qualified
-     * class name of this class. Entity logging is turned off by default.
+     * Create a logging filter logging the request and response to a default JDK logger, named as the fully qualified class name of this
+     * class. Entity logging is turned off by default.
      */
     public LoggingFilter() {
         this(LOGGER, false);
@@ -132,22 +132,21 @@ public class LoggingFilter implements ContainerRequestFilter, ClientRequestFilte
      *            if true, entity will be logged as well up to the default maxEntitySize, which is 8KB
      */
     @SuppressWarnings("BooleanParameter")
-    public LoggingFilter(final Logger logger, final boolean printEntity) {
+    public LoggingFilter(final Logger logger, final Boolean printEntity) {
         this.logger = logger;
         this.printEntity = printEntity;
         this.maxEntitySize = DEFAULT_MAX_ENTITY_SIZE;
     }
 
     /**
-     * Creates a logging filter with custom logger and entity logging turned on, but potentially limiting the size of
-     * entity to be buffered and logged.
+     * Creates a logging filter with custom logger and entity logging turned on, but potentially limiting the size of entity to be buffered
+     * and logged.
      *
      * @param logger
      *            the logger to log requests and responses.
      * @param maxEntitySize
-     *            maximum number of entity bytes to be logged (and buffered) - if the entity is larger, logging filter
-     *            will print (and buffer in memory) only the specified number of bytes and print "...more..." string at
-     *            the end.
+     *            maximum number of entity bytes to be logged (and buffered) - if the entity is larger, logging filter will print (and
+     *            buffer in memory) only the specified number of bytes and print "...more..." string at the end.
      */
     public LoggingFilter(final Logger logger, final int maxEntitySize) {
         this.logger = logger;
@@ -189,7 +188,7 @@ public class LoggingFilter implements ContainerRequestFilter, ClientRequestFilte
                 prefixId(b, id).append(prefix).append(header).append(": ").append(val.get(0)).append("\n");
             } else {
                 final StringBuilder sb = new StringBuilder();
-                boolean add = false;
+                Boolean add = false;
                 for (final Object s : val) {
                     if (add) {
                         sb.append(',');
@@ -227,7 +226,7 @@ public class LoggingFilter implements ContainerRequestFilter, ClientRequestFilte
 
     @Override
     public void filter(final ClientRequestContext context) throws IOException {
-        final long id = this._id.incrementAndGet();
+        final long id = aid.incrementAndGet();
         final StringBuilder b = new StringBuilder();
 
         printRequestLine(b, "Sending client request", id, context.getMethod(), context.getUri());
@@ -246,7 +245,7 @@ public class LoggingFilter implements ContainerRequestFilter, ClientRequestFilte
     @Override
     public void filter(final ClientRequestContext requestContext, final ClientResponseContext responseContext)
             throws IOException {
-        final long id = this._id.incrementAndGet();
+        final long id = aid.incrementAndGet();
         final StringBuilder b = new StringBuilder();
 
         printResponseLine(b, "Client response received", id, responseContext.getStatus());
@@ -261,7 +260,7 @@ public class LoggingFilter implements ContainerRequestFilter, ClientRequestFilte
 
     @Override
     public void filter(final ContainerRequestContext context) throws IOException {
-        final long id = this._id.incrementAndGet();
+        final long id = aid.incrementAndGet();
         final StringBuilder b = new StringBuilder();
 
         printRequestLine(b, "Server has received a request", id, context.getMethod(), context.getUriInfo()
@@ -278,7 +277,7 @@ public class LoggingFilter implements ContainerRequestFilter, ClientRequestFilte
     @Override
     public void filter(final ContainerRequestContext requestContext, final ContainerResponseContext responseContext)
             throws IOException {
-        final long id = this._id.incrementAndGet();
+        final long id = aid.incrementAndGet();
         final StringBuilder b = new StringBuilder();
 
         printResponseLine(b, "Server responded with a response", id, responseContext.getStatus());

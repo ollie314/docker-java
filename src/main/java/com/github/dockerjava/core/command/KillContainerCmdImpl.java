@@ -2,8 +2,8 @@ package com.github.dockerjava.core.command;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import com.github.dockerjava.api.NotFoundException;
 import com.github.dockerjava.api.command.KillContainerCmd;
+import com.github.dockerjava.api.exception.NotFoundException;
 
 /**
  * Kill a running container.
@@ -39,11 +39,6 @@ public class KillContainerCmdImpl extends AbstrDockerCmd<KillContainerCmd, Void>
         checkNotNull(signal, "signal was not specified");
         this.signal = signal;
         return this;
-    }
-
-    @Override
-    public String toString() {
-        return "kill " + containerId;
     }
 
     /**

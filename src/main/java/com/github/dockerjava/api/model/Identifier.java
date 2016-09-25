@@ -3,10 +3,14 @@ package com.github.dockerjava.api.model;
 import com.google.common.base.Objects;
 import com.google.common.base.Optional;
 
+import java.io.Serializable;
+
 /**
- * Created by magnayn on 22/07/2014.
+ * @author magnayn
  */
-public class Identifier {
+public class Identifier implements Serializable {
+    private static final long serialVersionUID = 1L;
+
     public final Repository repository;
 
     public final Optional<String> tag;
@@ -14,15 +18,16 @@ public class Identifier {
     public Identifier(Repository repository, String tag) {
         this.repository = repository;
 
-        if (tag == null)
+        if (tag == null) {
             this.tag = Optional.absent();
-        else
+        } else {
             this.tag = Optional.of(tag);
+        }
     }
 
     /**
-     * Return an identifier that correctly splits up the repository and tag. There can be &gt; 1 ":" fred/jim --&gt;
-     * fred/jim, [] fred/jim:123 --&gt; fred/jim, 123 fred:123/jim:123 --&gt; fred:123/jim, 123
+     * Return an identifier that correctly splits up the repository and tag. There can be &gt; 1 ":" fred/jim --&gt; fred/jim, []
+     * fred/jim:123 --&gt; fred/jim, 123 fred:123/jim:123 --&gt; fred:123/jim, 123
      *
      *
      * @param identifier
@@ -33,15 +38,17 @@ public class Identifier {
         String[] parts = identifier.split("/");
         if (parts.length != 2) {
             String[] rhs = identifier.split(":");
-            if (rhs.length != 2)
+            if (rhs.length != 2) {
                 return new Identifier(new Repository(identifier), null);
-            else
+            } else {
                 return new Identifier(new Repository(rhs[0]), rhs[1]);
+            }
         }
 
         String[] rhs = parts[1].split(":");
-        if (rhs.length != 2)
+        if (rhs.length != 2) {
             return new Identifier(new Repository(identifier), null);
+        }
 
         return new Identifier(new Repository(parts[0] + "/" + rhs[0]), rhs[1]);
     }

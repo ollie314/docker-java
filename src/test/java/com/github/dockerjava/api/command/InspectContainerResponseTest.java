@@ -15,18 +15,24 @@
  */
 package com.github.dockerjava.api.command;
 
+import org.testng.annotations.Test;
+
+import java.io.IOException;
+
 import static com.github.dockerjava.test.serdes.JSONTestHelper.testRoundTrip;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.isEmptyString;
+import static org.hamcrest.Matchers.nullValue;
+import static org.hamcrest.core.IsNot.not;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertTrue;
 
-import java.io.IOException;
-
-import org.testng.annotations.Test;
-
 /**
  * Tests for {@link InspectContainerResponse}.
- * 
+ *
  * @author Oleg Nenashev
  */
 public class InspectContainerResponseTest {
@@ -46,6 +52,23 @@ public class InspectContainerResponseTest {
         assertEquals(response.getVolumesRW()[1].getVolume().getPath(), "/bar/foo/myvol2");
         assertFalse(response.getVolumesRW()[1].getAccessMode().toBoolean());
         assertTrue(response.getVolumesRW()[0].getAccessMode().toBoolean());
+        assertThat(response.getLogPath(), is("/mnt/sda1/var/lib/docker/containers/469e5edd8d5b33e3c905a7ffc97360ec6ee211d6782815fbcd144568045819e1/469e5edd8d5b33e3c905a7ffc97360ec6ee211d6782815fbcd144568045819e1-json.log"));
+    }
+
+    @Test
+    public void roundTrip_1_21_full() throws IOException {
+        InspectContainerResponse[] responses = testRoundTrip(CommandJSONSamples.inspectContainerResponse_full_1_21,
+                InspectContainerResponse[].class);
+        assertEquals(1, responses.length);
+        final InspectContainerResponse response = responses[0];
+        final InspectContainerResponse.ContainerState state = response.getState();
+        assertThat(state, not(nullValue()));
+
+        assertFalse(state.getDead());
+        assertThat(state.getStatus(), containsString("running"));
+        assertFalse(state.getRestarting());
+        assertFalse(state.getOOMKilled());
+        assertThat(state.getError(), isEmptyString());
     }
 
     @Test
